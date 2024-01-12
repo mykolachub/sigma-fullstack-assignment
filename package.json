@@ -1,0 +1,14 @@
+{
+  "name": "sigma-fullstack-assignment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "backend": "cd backend && go run ./main.go",
+    "frontend": "cd frontend && npm ci && npm run serve",
+    "compose": "docker-compose up"
+  },
+  "keywords": [],
+  "author": "Mykola Chub <mykolachubb@gmail.com>",
+  "license": "MIT"
+}
