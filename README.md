@@ -18,9 +18,10 @@ This will build and run both backend and frontend.
 $ npm run compose
 ```
 
-Frontend will be available on `http://localhost:8080/api/`
+Backend will be available on `http://localhost:8080/api/`<br>
+Frontend will be available on `http://localhost:3000/`
 
-#### Run only backend
+### Run only backend
 
 This will build and run only backend.
 
@@ -28,9 +29,11 @@ This will build and run only backend.
 $ npm run backend
 ```
 
-#### Run only frontend
+Backend will be available on `http://localhost:8080/api/`
 
-This will build and run only fronend. Note that fronend can not work properly without running backend server, since it depens on backend api.
+### Run only frontend
+
+This will build and run only fronend. Note that frontend can not work properly without running backend server, since it depens on backend api.
 
 ```bash
 $ npm run frontend
