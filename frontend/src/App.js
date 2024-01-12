@@ -1,23 +1,43 @@
-import logo from './logo.svg';
+import { Route, Routes } from 'react-router-dom';
+import Home from './views/home/Home';
+import CreateUser from './views/create/CreateUser';
+
 import './App.css';
+import UpdateUser from './views/update/Update';
+
+const PageLayout = ({ children }) => (
+  <div className="app__wrapper h-screen">{children}</div>
+);
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app__container">
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PageLayout>
+              <Home />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/create"
+          element={
+            <PageLayout>
+              <CreateUser />
+            </PageLayout>
+          }
+        />
+        <Route
+          path="/update"
+          element={
+            <PageLayout>
+              <UpdateUser />
+            </PageLayout>
+          }
+        />
+      </Routes>
     </div>
   );
 }
