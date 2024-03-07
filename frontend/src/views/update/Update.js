@@ -24,14 +24,18 @@ const UpdateUser = () => {
   }, []);
 
   const handleEmailChange = (event) => {
+    event.preventDefault();
     setEmail(event.target.value);
   };
 
   const handlePasswordChange = (event) => {
+    event.preventDefault();
     setPassword(event.target.value);
   };
 
   const handleButtonSubmit = (event) => {
+    event.preventDefault();
+    console.log(id);
     if (!email.length || !password.length) return;
     updateUser(id, { email, password }).then((res) => navigate('/'));
   };
@@ -80,9 +84,7 @@ const UpdateUser = () => {
             />
           </div>
 
-          <Button className="" onClick={handleButtonSubmit}>
-            Change User
-          </Button>
+          <Button onClick={handleButtonSubmit}>Change User</Button>
         </form>
       </div>
     </div>
