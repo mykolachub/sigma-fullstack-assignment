@@ -36,6 +36,16 @@ func (s UserService) GetUserById(id string) (response.User, error) {
 	return user.ToResponse(), err
 }
 
+func (s UserService) GetUserByEmail(email string) (response.User, error) {
+	idx, exists := s.repo.GetUserIdxByEmail(email)
+	if !exists {
+		return response.User{}, errors.New("No such user")
+	}
+
+	user, err := s.repo.GetUserByIdx(idx)
+	return user.ToResponse(), err
+}
+
 func (s UserService) CreateUser(user request.User) (response.User, error) {
 	_, exists := s.repo.GetUserIdxByEmail(user.Email)
 	if exists {
