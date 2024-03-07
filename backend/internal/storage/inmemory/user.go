@@ -17,12 +17,14 @@ func NewUsersRepo() *UsersRepo {
 		{
 			ID:       helpers.GetKsuid(),
 			Email:    "test@test.com",
-			Password: "test123",
+			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO",
+			Role:     "user",
 		},
 		{
 			ID:       helpers.GetKsuid(),
 			Email:    "test2@test.com",
-			Password: "test123",
+			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO",
+			Role:     "admin",
 		},
 	}
 	repo := UsersRepo{

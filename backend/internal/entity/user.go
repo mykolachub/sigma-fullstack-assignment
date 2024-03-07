@@ -1,11 +1,14 @@
 package entity
 
-import "sigma-test/internal/response"
+import (
+	"sigma-test/internal/response"
+)
 
 type User struct {
 	ID       string
 	Email    string
 	Password string
+	Role     string
 }
 
 func (u *User) ToResponse() response.User {
@@ -13,5 +16,6 @@ func (u *User) ToResponse() response.User {
 		ID:       u.ID,
 		Email:    u.Email,
 		Password: u.Password,
+		Role:     u.Role,
 	}
 }
