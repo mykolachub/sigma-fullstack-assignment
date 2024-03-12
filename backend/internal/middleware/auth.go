@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sigma-test/internal/response"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +45,7 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc {
+func Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(authorizationHeader)
 		if len(authHeader) == 0 {
@@ -85,22 +84,11 @@ func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc
 			return
 		}
 
-		userId, err := token.Claims.GetSubject()
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
+		userId := token.Claims.(jwt.MapClaims)["id"]
+		userRole := token.Claims.(jwt.MapClaims)["role"]
 
-		payload, err := getUserFunc(userId)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		ctx.Set("payload_user_role", payload.Role)
-		ctx.Set("payload_user_id", payload.ID)
-		ctx.Set("payload_user_email", payload.Email)
-		ctx.Set("payload_user_password", payload.Password)
+		ctx.Set("payload_user_role", userRole)
+		ctx.Set("payload_user_id", userId)
 
 		ctx.Next()
 	}
