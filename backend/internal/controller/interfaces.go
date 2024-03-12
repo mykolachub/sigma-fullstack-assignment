@@ -14,6 +14,7 @@ type Services struct {
 type UserService interface {
 	GetAllUsers() ([]response.User, error)
 	GetUserById(id string) (response.User, error)
+	GetUserByEmail(email string) (response.User, error)
 	CreateUser(user request.User) (response.User, error)
 	UpdateUser(id string, user request.User) (response.User, error)
 	DeleteUser(email string) error

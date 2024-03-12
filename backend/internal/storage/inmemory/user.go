@@ -2,7 +2,6 @@ package inmemory
 
 import (
 	"sigma-test/internal/entity"
-	"sigma-test/pkg/helpers"
 )
 
 // In case of gorm the struct will have db field
@@ -15,14 +14,16 @@ func NewUsersRepo() *UsersRepo {
 	// using simple slice of users as database
 	users := []entity.User{
 		{
-			ID:       helpers.GetKsuid(),
+			ID:       "2dXeeVItnr9Ci7trhCp10LFvtNJ",
 			Email:    "test@test.com",
-			Password: "test123",
+			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO", // test123
+			Role:     "user",
 		},
 		{
-			ID:       helpers.GetKsuid(),
-			Email:    "test2@test.com",
-			Password: "test123",
+			ID:       "2dXecVszaUb8AUybj33pcb4lR60",
+			Email:    "admin@test.com",
+			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO", // test123
+			Role:     "admin",
 		},
 	}
 	repo := UsersRepo{
