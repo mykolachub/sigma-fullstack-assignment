@@ -24,9 +24,7 @@ func InitUserHandler(r *gin.Engine, userSvc UserService) {
 	r.POST("/api/signup", handler.signup)
 	r.POST("/api/login", handler.login)
 
-	r.Use(middleware.Protect(func(id string) (response.User, error) {
-		return userSvc.GetUserById(id)
-	}))
+	r.Use(middleware.Protect(userSvc))
 
 	r.GET("/api/me", handler.me)
 
@@ -35,11 +33,10 @@ func InitUserHandler(r *gin.Engine, userSvc UserService) {
 	r.POST("/api/users", middleware.OnlyAdmin(), handler.createUser)
 	r.PATCH("/api/users", middleware.OnlyAdminOrOwner(), handler.updateUser)
 	r.DELETE("/api/users", middleware.OnlyAdminOrOwner(), handler.deleteUser)
-
 }
 
 func (h UserHandler) me(c *gin.Context) {
-	payloadId := c.Keys["payload_user_id"]
+	payloadId := c.Keys["payload_user_id"] // create getters in auth.go and user them instead of direct access
 	payloadEmail := c.Keys["payload_user_email"]
 	payloadRole := c.Keys["payload_user_role"]
 	payloadPassword := c.Keys["payload_user_password"]
@@ -76,7 +73,9 @@ func (h UserHandler) signup(c *gin.Context) {
 	}
 
 	// create user
-	user, err := h.userSvc.CreateUser(request.User{Email: body.Email, Password: string(hash), Role: body.Role})
+	user, err := h.userSvc.CreateUser(
+		request.User{Email: body.Email, Password: string(hash), Role: body.Role},
+	)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Failed to create user"})
 		return
@@ -104,6 +103,7 @@ func (h UserHandler) login(c *gin.Context) {
 
 	// compare sent in pass with saved user pass hash
 	fmt.Println(user.Password, body.Password, user.Password == body.Password)
+	// best to move this to a service and use strategy pattern for different hashing algorithms (bcrypt, scrypt, argon2) in case of future changes
 	hash_err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if hash_err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": hash_err.Error()})

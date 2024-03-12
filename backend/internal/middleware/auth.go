@@ -17,11 +17,23 @@ const (
 	authorizationTypeBearer = "bearer"
 )
 
+type ContextKey string // separate type for context keys to avoid clashin
+
+const playoadUserRole ContextKey = "payload_user_role"
+
+// depdend only on what it needs
+type UserService interface {
+	GetUserById(id string) (response.User, error)
+}
+
 func OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		role := ctx.Keys["payload_user_role"]
 		if role != "admin" {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
+			ctx.AbortWithStatusJSON(
+				http.StatusForbidden,
+				gin.H{"error": "you do not have permission to access this route"},
+			)
 			return
 		}
 
@@ -31,14 +43,17 @@ func OnlyAdmin() gin.HandlerFunc {
 
 func OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		payloadRole := ctx.Keys["payload_user_role"]
-		payloadId := ctx.Keys["payload_user_id"]
+		payloadRole := ctx.Keys["payload_user_role"] // const
+		payloadId := ctx.Keys["payload_user_id"]     // const
 
-		isAdmin := payloadRole == "admin"
-		isOwner := payloadId == ctx.Query("id")
+		isAdmin := payloadRole == "admin"       // const
+		isOwner := payloadId == ctx.Query("id") // const
 
-		if !(isOwner || isAdmin) {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
+		if !isOwner && !isAdmin { // [NIT] De Morgan's law
+			ctx.AbortWithStatusJSON(
+				http.StatusForbidden,
+				gin.H{"error": "you do not have permission to access this route"},
+			)
 			return
 		}
 
@@ -46,7 +61,8 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc {
+func Protect(userService UserService) gin.HandlerFunc {
+	// Split into multile functions: validate, parse token
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(authorizationHeader)
 		if len(authHeader) == 0 {
@@ -73,7 +89,6 @@ func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc
 		token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("SECRET")), nil
 		})
-
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
@@ -91,13 +106,13 @@ func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc
 			return
 		}
 
-		payload, err := getUserFunc(userId)
+		payload, err := userService.GetUserById(userId)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.Set("payload_user_role", payload.Role)
+		ctx.Set("payload_user_role", payload.Role) // package level consts e.g. playoad_user_role
 		ctx.Set("payload_user_id", payload.ID)
 		ctx.Set("payload_user_email", payload.Email)
 		ctx.Set("payload_user_password", payload.Password)
