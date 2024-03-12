@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter(r *gin.Engine, services Services) {
+func InitRouter(r *gin.Engine, services Services) *gin.Engine {
 	// CORS config
 	r.Use(cors.New(config.CorsConfig))
 
@@ -21,6 +21,5 @@ func InitRouter(r *gin.Engine, services Services) {
 
 	InitUserHandler(r, services.UserService)
 
-	// Listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
-	r.Run()
+	return r
 }

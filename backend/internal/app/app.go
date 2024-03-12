@@ -9,8 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Run( /* additional configs */ ) {
-
+func SetupRouter() *gin.Engine {
 	// Storages initialization
 	storages := service.Storages{
 		UserRepo: inmemory.NewUsersRepo( /* database connection */ ),
@@ -28,5 +27,11 @@ func Run( /* additional configs */ ) {
 	router := gin.Default()
 
 	// Controllers initialization
-	controller.InitRouter(router, services)
+	r := controller.InitRouter(router, services)
+	return r
+}
+
+func Run( /* additional configs */ ) {
+	r := SetupRouter()
+	r.Run()
 }
