@@ -8,6 +8,7 @@ import (
 	"sigma-test/internal/app"
 	"sigma-test/internal/controller"
 	"sigma-test/internal/entity"
+	"sigma-test/internal/util"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -188,6 +189,72 @@ func TestLoginWithMocks(t *testing.T) {
 		r.ServeHTTP(res, req)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+}
+
+func TestMeWithMocks(t *testing.T) {
+	t.Run("should return 200 on success", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role)
+
+		userService := &MockUserService{MockDB: []entity.User{mockUser}}
+		controller.InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("GET", "/api/me", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		t.Log(res.Body.String())
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 422 on invalid token", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken("INVALID_ID", "INVALID_ROLE")
+
+		userService := &MockUserService{MockDB: []entity.User{mockUser}}
+		controller.InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("GET", "/api/me", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		t.Log(res.Body.String())
+		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+
+	t.Run("should return 401 on missing token", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
+
+		userService := &MockUserService{MockDB: []entity.User{mockUser}}
+		controller.InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("GET", "/api/me", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		t.Log(res.Body.String())
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
 

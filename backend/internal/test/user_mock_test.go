@@ -21,7 +21,13 @@ func (m *MockUserService) GetAllUsers() ([]response.User, error) {
 }
 
 func (m *MockUserService) GetUserById(id string) (response.User, error) {
-	return response.User{}, nil
+	for _, v := range m.MockDB {
+		if v.ID == id {
+			return v.ToResponse(), nil
+		}
+	}
+
+	return response.User{}, errors.New("no such user")
 }
 
 func (m *MockUserService) UpdateUser(id string, user request.User) (response.User, error) {
