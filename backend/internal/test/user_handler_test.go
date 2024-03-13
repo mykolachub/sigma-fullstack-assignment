@@ -130,6 +130,67 @@ func TestSignupIntegration(t *testing.T) {
 	})
 }
 
+func TestLoginWithMocks(t *testing.T) {
+	t.Run("should return 200 on successful login", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
+		userService := &MockUserService{MockDB: []entity.User{mockUser}}
+		controller.InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(mockUser)
+		body := bytes.NewBuffer(requestBody)
+		req, err := http.NewRequest("POST", "/api/login", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 400 on invalid body", func(t *testing.T) {
+		r := gin.New()
+
+		userService := &MockUserService{MockDB: nil}
+		controller.InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("POST", "/api/login", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	})
+
+	t.Run("should return 422 on invalid credantials", func(t *testing.T) {
+		r := gin.New()
+
+		// No users in mocked database, login impossible
+		mockUser := entity.User{}
+		userService := &MockUserService{MockDB: nil}
+		controller.InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(mockUser)
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("POST", "/api/login", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+}
+
 func TestPingPongIntegration(t *testing.T) {
 	t.Run("should return ping on pong", func(t *testing.T) {
 		router := app.SetupRouter()

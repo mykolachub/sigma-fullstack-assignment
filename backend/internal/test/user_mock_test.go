@@ -24,10 +24,6 @@ func (m *MockUserService) GetUserById(id string) (response.User, error) {
 	return response.User{}, nil
 }
 
-func (m *MockUserService) Login(body request.User) (string, error) {
-	return "", nil
-}
-
 func (m *MockUserService) UpdateUser(id string, user request.User) (response.User, error) {
 	return response.User{}, nil
 }
@@ -51,4 +47,15 @@ func (m *MockUserService) SignUp(body request.User) (response.User, error) {
 		}
 	}
 	return response.User{ID: "test", Email: "test@test.com", Password: "password", Role: "user"}, nil
+}
+
+func (m *MockUserService) Login(body request.User) (string, error) {
+	// If user exists in mockDB, return test access token
+	for _, v := range m.MockDB {
+		if v.Email == body.Email {
+			return "testTokenStrign", nil
+		}
+	}
+
+	return "", errors.New("test login error")
 }
