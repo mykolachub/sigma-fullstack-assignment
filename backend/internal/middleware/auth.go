@@ -2,23 +2,23 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
-	"strings"
+	"sigma-test/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const authorizationHeader = "authorization"
+
 const (
-	authorizationHeader     = "authorization"
-	authorizationTypeBearer = "bearer"
+	payloadUserRole = "payload_user_role"
+	payloadUserId   = "payload_user_id"
 )
 
 func OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		role := ctx.Keys["payload_user_role"]
+		role := ctx.Keys[payloadUserRole]
 		if role != "admin" {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
 			return
@@ -30,13 +30,13 @@ func OnlyAdmin() gin.HandlerFunc {
 
 func OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		payloadRole := ctx.Keys["payload_user_role"]
-		payloadId := ctx.Keys["payload_user_id"]
+		payloadRole := ctx.Keys[payloadUserRole]
+		payloadId := ctx.Keys[payloadUserId]
 
 		isAdmin := payloadRole == "admin"
 		isOwner := payloadId == ctx.Query("id")
 
-		if !(isOwner || isAdmin) {
+		if !isOwner && !isAdmin {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
 			return
 		}
@@ -54,32 +54,14 @@ func Protect() gin.HandlerFunc {
 			return
 		}
 
-		fields := strings.Fields(authHeader)
-		if len(fields) < 2 {
-			err := errors.New("invalid authorization header format")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		authType := strings.ToLower(fields[0])
-		if authType != authorizationTypeBearer {
-			err := fmt.Errorf("unsupported authorization type %s", authType)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		accessToken := fields[1]
-		token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("SECRET")), nil
-		})
-
+		accessToken, err := util.ValidateBearerHeader(authHeader)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
-		if !token.Valid {
-			err := fmt.Errorf("invalid token")
+		token, err := util.ParseAndValidateJWTToken(accessToken)
+		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
@@ -87,8 +69,8 @@ func Protect() gin.HandlerFunc {
 		userId := token.Claims.(jwt.MapClaims)["id"]
 		userRole := token.Claims.(jwt.MapClaims)["role"]
 
-		ctx.Set("payload_user_role", userRole)
-		ctx.Set("payload_user_id", userId)
+		ctx.Set(payloadUserRole, userRole)
+		ctx.Set(payloadUserId, userId)
 
 		ctx.Next()
 	}

@@ -2,13 +2,11 @@ package service
 
 import (
 	"errors"
-	"os"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
+	"sigma-test/internal/util"
 	"sigma-test/pkg/helpers"
-	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,13 +43,7 @@ func (s UserService) Login(body request.User) (string, error) {
 		return "", hash_err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   user.ID,
-		"role": user.Role,
-		"exp":  time.Now().Add(time.Hour * 24).Unix(),
-	})
-
-	return token.SignedString([]byte(os.Getenv("SECRET")))
+	return util.GenerateJWTToken(user.ID, user.Role)
 }
 
 func (s UserService) GetAllUsers() ([]response.User, error) {
