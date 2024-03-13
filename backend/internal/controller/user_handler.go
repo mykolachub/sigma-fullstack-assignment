@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 	"sigma-test/internal/middleware"
 	"sigma-test/internal/request"
+	"sigma-test/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +29,6 @@ func InitUserHandler(r *gin.Engine, userSvc UserService) {
 	r.POST("/api/users", middleware.OnlyAdmin(), handler.createUser)
 	r.PATCH("/api/users", middleware.OnlyAdminOrOwner(), handler.updateUser)
 	r.DELETE("/api/users", middleware.OnlyAdminOrOwner(), handler.deleteUser)
-
 }
 
 func (h UserHandler) me(c *gin.Context) {
@@ -49,6 +50,13 @@ func (h UserHandler) signup(c *gin.Context) {
 
 	user, err := h.userSvc.SignUp(body)
 	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrUserAlreadyExists):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+			// ... other error types
+		}
+
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}

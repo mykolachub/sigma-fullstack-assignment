@@ -20,10 +20,15 @@ func NewUserService(r UserRepo) UserService {
 	return UserService{repo: r}
 }
 
+var (
+	ErrInvalidUserEmail  = errors.New("invalid email or password")
+	ErrUserAlreadyExists = errors.New("user already exists")
+)
+
 func (s UserService) SignUp(body request.User) (response.User, error) {
 	_, err := s.GetUserByEmail(body.Email)
 	if err == nil {
-		return response.User{}, errors.New("user already exists")
+		return response.User{}, ErrUserAlreadyExists
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
@@ -37,12 +42,12 @@ func (s UserService) SignUp(body request.User) (response.User, error) {
 func (s UserService) Login(body request.User) (string, error) {
 	user, err := s.GetUserByEmail(body.Email)
 	if err != nil {
-		return "", errors.New("invalid email or password")
+		return "", ErrInvalidUserEmail
 	}
 
-	hash_err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
-	if hash_err != nil {
-		return "", hash_err
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+	if err != nil {
+		return "", err
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
