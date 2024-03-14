@@ -17,7 +17,11 @@ func (m *MockUserService) DeleteUser(email string) error {
 }
 
 func (m *MockUserService) GetAllUsers() ([]response.User, error) {
-	return []response.User{}, nil
+	var users []response.User
+	for _, v := range m.MockDB {
+		users = append(users, v.ToResponse())
+	}
+	return users, nil
 }
 
 func (m *MockUserService) GetUserById(id string) (response.User, error) {
