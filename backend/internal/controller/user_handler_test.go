@@ -533,3 +533,112 @@ func TestUpdateUser(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
+
+func TestDeleteUser(t *testing.T) {
+	t.Run("should return 200 on delete by owner", func(t *testing.T) {
+		r := gin.New()
+
+		mockOwner := entity.User{ID: "owner", Email: "owner@test.com", Password: "owner", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockOwner}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("DELETE", "/api/users?id="+mockOwner.ID, nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 200 on delete by admin", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "admin", Email: "admin@test.com", Password: "admin", Role: "admin"}
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin, mockUser}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("DELETE", "/api/users?id="+mockUser.ID, nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 403 on delete by non-owner and non-admin", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser1 := entity.User{ID: "user1", Email: "user1@test.com", Password: "user1", Role: "user"}
+		mockUser2 := entity.User{ID: "user2", Email: "user2@test.com", Password: "user2", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockUser1, mockUser2}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("DELETE", "/api/users?id="+mockUser2.ID, nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+	})
+
+	t.Run("should return 422 on invalid id", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "admin", Email: "admin@test.com", Password: "admin", Role: "admin"}
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin, mockUser}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("DELETE", "/api/users?id="+"INVALID_ID", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+
+	// 401 on missing token
+	t.Run("should return 401 on missing token", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockUser}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("DELETE", "/api/users?id="+mockUser.ID, nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+}

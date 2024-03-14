@@ -19,5 +19,5 @@ type UserService interface {
 	GetUserByEmail(email string) (response.User, error)
 	CreateUser(user request.User) (response.User, error)
 	UpdateUser(id string, user request.User) (response.User, error)
-	DeleteUser(email string) error
+	DeleteUser(id string) error
 }

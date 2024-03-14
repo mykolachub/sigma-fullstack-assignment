@@ -12,8 +12,14 @@ type MockUserService struct {
 	MockDB []entity.User
 }
 
-func (m *MockUserService) DeleteUser(email string) error {
-	return nil
+func (m *MockUserService) DeleteUser(id string) error {
+	for i, v := range m.MockDB {
+		if v.ID == id {
+			m.MockDB = append(m.MockDB[:i], m.MockDB[i+1:]...)
+			return nil
+		}
+	}
+	return errors.New("no such user")
 }
 
 func (m *MockUserService) GetAllUsers() ([]response.User, error) {
