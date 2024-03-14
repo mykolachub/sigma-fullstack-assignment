@@ -38,9 +38,8 @@ func (s UserService) Login(body request.User) (string, error) {
 		return "", errors.New("invalid email or password")
 	}
 
-	hash_err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
-	if hash_err != nil {
-		return "", hash_err
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
+		return "", err
 	}
 
 	return util.GenerateJWTToken(user.ID, user.Role)

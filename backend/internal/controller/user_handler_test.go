@@ -163,7 +163,6 @@ func TestMe(t *testing.T) {
 		res := httptest.NewRecorder()
 		r.ServeHTTP(res, req)
 
-		t.Log(res.Body.String())
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
 
@@ -185,7 +184,6 @@ func TestMe(t *testing.T) {
 		res := httptest.NewRecorder()
 		r.ServeHTTP(res, req)
 
-		t.Log(res.Body.String())
 		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
 	})
 
@@ -205,7 +203,6 @@ func TestMe(t *testing.T) {
 		res := httptest.NewRecorder()
 		r.ServeHTTP(res, req)
 
-		t.Log(res.Body.String())
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
@@ -248,7 +245,6 @@ func TestGetAllUsers(t *testing.T) {
 		res := httptest.NewRecorder()
 		r.ServeHTTP(res, req)
 
-		t.Log(res.Body.String())
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }

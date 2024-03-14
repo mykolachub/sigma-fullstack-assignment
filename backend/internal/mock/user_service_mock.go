@@ -2,7 +2,6 @@ package mock
 
 import (
 	"errors"
-	"log"
 	"sigma-test/internal/entity"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
@@ -69,12 +68,8 @@ func (m *MockUserService) CreateUser(user request.User) (response.User, error) {
 	return response.User(user.ToEntity()), nil
 }
 
-// SignUp implements controller.UserService.
 func (m *MockUserService) SignUp(body request.User) (response.User, error) {
 	for _, v := range m.MockDB {
-		log.Println(v.Email)
-		log.Println(body.Email)
-
 		if v.Email == body.Email {
 			return response.User{}, errors.New("user already exists")
 		}
@@ -83,12 +78,10 @@ func (m *MockUserService) SignUp(body request.User) (response.User, error) {
 }
 
 func (m *MockUserService) Login(body request.User) (string, error) {
-	// If user exists in mockDB, return test access token
 	for _, v := range m.MockDB {
 		if v.Email == body.Email {
 			return "testTokenStrign", nil
 		}
 	}
-
 	return "", errors.New("test login error")
 }
