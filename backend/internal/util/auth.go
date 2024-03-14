@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const authorizationTypeBearer = "Bearer"
+const authorizationTypeBearer = "bearer"
 
 func ValidateBearerHeader(authHeader string) (string, error) {
 	fields := strings.Fields(authHeader)
