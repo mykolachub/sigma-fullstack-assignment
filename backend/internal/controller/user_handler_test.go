@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSignupWithMocks(t *testing.T) {
+func TestSignup(t *testing.T) {
 	t.Run("should return 200 on successful signup", func(t *testing.T) {
 		r := gin.New()
 
@@ -82,7 +82,7 @@ func TestSignupWithMocks(t *testing.T) {
 	})
 }
 
-func TestLoginWithMocks(t *testing.T) {
+func TestLogin(t *testing.T) {
 	t.Run("should return 200 on successful login", func(t *testing.T) {
 		r := gin.New()
 
@@ -143,7 +143,7 @@ func TestLoginWithMocks(t *testing.T) {
 	})
 }
 
-func TestMeWithMocks(t *testing.T) {
+func TestMe(t *testing.T) {
 	t.Run("should return 200 on success", func(t *testing.T) {
 		r := gin.New()
 
