@@ -4,7 +4,10 @@ import (
 	"errors"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
+	"sigma-test/internal/util"
 	"sigma-test/pkg/helpers"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -13,6 +16,34 @@ type UserService struct {
 
 func NewUserService(r UserRepo) UserService {
 	return UserService{repo: r}
+}
+
+func (s UserService) SignUp(body request.User) (response.User, error) {
+	_, err := s.GetUserByEmail(body.Email)
+	if err == nil {
+		return response.User{}, errors.New("user already exists")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		return response.User{}, errors.New("failed to hash body")
+	}
+
+	return s.CreateUser(request.User{Email: body.Email, Password: string(hash), Role: body.Role})
+}
+
+func (s UserService) Login(body request.User) (string, error) {
+	user, err := s.GetUserByEmail(body.Email)
+	if err != nil {
+		return "", errors.New("invalid email or password")
+	}
+
+	hash_err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+	if hash_err != nil {
+		return "", hash_err
+	}
+
+	return util.GenerateJWTToken(user.ID, user.Role)
 }
 
 func (s UserService) GetAllUsers() ([]response.User, error) {

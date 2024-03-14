@@ -2,24 +2,23 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
-	"sigma-test/internal/response"
-	"strings"
+	"sigma-test/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const authorizationHeader = "authorization"
+
 const (
-	authorizationHeader     = "authorization"
-	authorizationTypeBearer = "bearer"
+	payloadUserRole = "payload_user_role"
+	payloadUserId   = "payload_user_id"
 )
 
 func OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		role := ctx.Keys["payload_user_role"]
+		role := ctx.Keys[payloadUserRole]
 		if role != "admin" {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
 			return
@@ -31,13 +30,13 @@ func OnlyAdmin() gin.HandlerFunc {
 
 func OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		payloadRole := ctx.Keys["payload_user_role"]
-		payloadId := ctx.Keys["payload_user_id"]
+		payloadRole := ctx.Keys[payloadUserRole]
+		payloadId := ctx.Keys[payloadUserId]
 
 		isAdmin := payloadRole == "admin"
 		isOwner := payloadId == ctx.Query("id")
 
-		if !(isOwner || isAdmin) {
+		if !isOwner && !isAdmin {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
 			return
 		}
@@ -46,7 +45,7 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc {
+func Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(authorizationHeader)
 		if len(authHeader) == 0 {
@@ -55,52 +54,23 @@ func Protect(getUserFunc func(id string) (response.User, error)) gin.HandlerFunc
 			return
 		}
 
-		fields := strings.Fields(authHeader)
-		if len(fields) < 2 {
-			err := errors.New("invalid authorization header format")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		authType := strings.ToLower(fields[0])
-		if authType != authorizationTypeBearer {
-			err := fmt.Errorf("unsupported authorization type %s", authType)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		accessToken := fields[1]
-		token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("SECRET")), nil
-		})
-
+		accessToken, err := util.ValidateBearerHeader(authHeader)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
-		if !token.Valid {
-			err := fmt.Errorf("invalid token")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		userId, err := token.Claims.GetSubject()
+		token, err := util.ParseAndValidateJWTToken(accessToken)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			return
 		}
 
-		payload, err := getUserFunc(userId)
-		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
+		userId := token.Claims.(jwt.MapClaims)["id"]
+		userRole := token.Claims.(jwt.MapClaims)["role"]
 
-		ctx.Set("payload_user_role", payload.Role)
-		ctx.Set("payload_user_id", payload.ID)
-		ctx.Set("payload_user_email", payload.Email)
-		ctx.Set("payload_user_password", payload.Password)
+		ctx.Set(payloadUserRole, userRole)
+		ctx.Set(payloadUserId, userId)
 
 		ctx.Next()
 	}
