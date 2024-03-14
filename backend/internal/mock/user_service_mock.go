@@ -35,7 +35,18 @@ func (m *MockUserService) GetUserById(id string) (response.User, error) {
 }
 
 func (m *MockUserService) UpdateUser(id string, user request.User) (response.User, error) {
-	return response.User{}, nil
+	for i, v := range m.MockDB {
+		if v.ID == id {
+			switch {
+			case user.Email != "":
+				m.MockDB[i].Email = user.Email
+			case user.Password != "":
+				m.MockDB[i].Password = user.Password
+			}
+			return response.User(m.MockDB[i]), nil
+		}
+	}
+	return response.User{}, errors.New("no such user")
 }
 
 func (m *MockUserService) GetUserByEmail(email string) (response.User, error) {

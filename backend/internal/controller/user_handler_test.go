@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"sigma-test/internal/entity"
 	"sigma-test/internal/mock"
+	"sigma-test/internal/request"
 	"sigma-test/internal/util"
 	"testing"
 
@@ -399,6 +400,129 @@ func TestCreateUser(t *testing.T) {
 		InitUserHandler(r, userService)
 
 		req, err := http.NewRequest("POST", "/api/users", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+}
+
+func TestUpdateUser(t *testing.T) {
+	t.Run("should return 200 on update by owner", func(t *testing.T) {
+		r := gin.New()
+
+		mockOwner := entity.User{ID: "owner", Email: "owner@test.com", Password: "owner", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockOwner}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(request.User{Email: "changed@test.com"})
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("PATCH", "/api/users?id="+mockOwner.ID, body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 200 on update by admin", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "admin", Email: "admin@test.com", Password: "admin", Role: "admin"}
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin, mockUser}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(request.User{Email: "changed@test.com"})
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("PATCH", "/api/users?id="+mockUser.ID, body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusOK, res.Code)
+	})
+
+	t.Run("should return 403 on update by non-owner and non-admin", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser1 := entity.User{ID: "user1", Email: "user1@test.com", Password: "user1", Role: "user"}
+		mockUser2 := entity.User{ID: "user2", Email: "user2@test.com", Password: "user2", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockUser1, mockUser2}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(request.User{Email: "changed@test.com"})
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("PATCH", "/api/users?id="+mockUser2.ID, body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+	})
+
+	t.Run("should return 422 on invalid id", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "admin", Email: "admin@test.com", Password: "admin", Role: "admin"}
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin, mockUser}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(request.User{Email: "changed@test.com"})
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("PATCH", "/api/users?id="+"INVALID_ID", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+
+	t.Run("should return 401 on missing token", func(t *testing.T) {
+		r := gin.New()
+
+		mockUser := entity.User{ID: "user", Email: "user@test.com", Password: "user", Role: "user"}
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockUser}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(request.User{Email: "changed@test.com"})
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("PATCH", "/api/users?id="+mockUser.ID, body)
 		if err != nil {
 			require.NoError(t, err)
 		}
