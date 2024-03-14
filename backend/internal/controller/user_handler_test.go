@@ -314,3 +314,98 @@ func TestGetUsersById(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
+
+func TestCreateUser(t *testing.T) {
+	t.Run("should return 201 on success", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "admin"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin}}
+		InitUserHandler(r, userService)
+
+		mockNewUser := entity.User{ID: "new", Email: "new@test.com", Password: "test", Role: "user"}
+		requestBody, _ := json.Marshal(mockNewUser)
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("POST", "/api/users", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusCreated, res.Code)
+	})
+
+	t.Run("should return 403 on non-admin", func(t *testing.T) {
+		r := gin.New()
+
+		mockNonAdmin := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
+		mockToken, _ := util.GenerateJWTToken(mockNonAdmin.ID, mockNonAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockNonAdmin}}
+		InitUserHandler(r, userService)
+
+		mockNewUser := entity.User{ID: "new", Email: "new@test.com", Password: "test", Role: "user"}
+		requestBody, _ := json.Marshal(mockNewUser)
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("POST", "/api/users", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusForbidden, res.Code)
+	})
+
+	t.Run("should return 422 on user already exists", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "admin"}
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin}}
+		InitUserHandler(r, userService)
+
+		requestBody, _ := json.Marshal(mockAdmin)
+		body := bytes.NewBuffer(requestBody)
+
+		req, err := http.NewRequest("POST", "/api/users", body)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		req.Header.Add("Authorization", "Bearer "+mockToken)
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, res.Code)
+	})
+
+	t.Run("should return 401 on missing token", func(t *testing.T) {
+		r := gin.New()
+
+		mockAdmin := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "admin"}
+
+		userService := &mock.MockUserService{MockDB: []entity.User{mockAdmin}}
+		InitUserHandler(r, userService)
+
+		req, err := http.NewRequest("POST", "/api/users", nil)
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		res := httptest.NewRecorder()
+		r.ServeHTTP(res, req)
+
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+}

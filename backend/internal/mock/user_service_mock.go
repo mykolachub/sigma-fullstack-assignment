@@ -43,7 +43,13 @@ func (m *MockUserService) GetUserByEmail(email string) (response.User, error) {
 }
 
 func (m *MockUserService) CreateUser(user request.User) (response.User, error) {
-	return response.User{}, nil
+	for _, v := range m.MockDB {
+		if v.Email == user.Email {
+			return response.User{}, errors.New("user already exists")
+		}
+	}
+	m.MockDB = append(m.MockDB, user.ToEntity())
+	return response.User(user.ToEntity()), nil
 }
 
 // SignUp implements controller.UserService.

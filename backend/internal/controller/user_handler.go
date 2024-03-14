@@ -102,7 +102,7 @@ func (h UserHandler) createUser(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusCreated, gin.H{"data": user})
 }
 
 func (h UserHandler) updateUser(c *gin.Context) {
