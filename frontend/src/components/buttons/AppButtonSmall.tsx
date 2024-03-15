@@ -1,4 +1,12 @@
-const ButtonSmall = ({ children, onClick }) => {
+import React from 'react';
+
+interface AppButtonProps extends React.ComponentPropsWithRef<'button'> {
+  onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  children?: React.ReactNode;
+}
+
+const AppButtonSmall = (props: AppButtonProps) => {
+  const { onClick, children } = props;
   return (
     <button
       onClick={onClick}
@@ -9,4 +17,4 @@ const ButtonSmall = ({ children, onClick }) => {
   );
 };
 
-export default ButtonSmall;
+export default AppButtonSmall;

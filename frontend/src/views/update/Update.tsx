@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import useUserStore from '../../utils/store';
+import useUserStore from '../../stores/user';
 import { useNavigate } from 'react-router-dom';
-import Button from '../../components/buttons/Button';
+import React from 'react';
+import AppButton from '../../components/buttons/AppButton';
 
 const UpdateUser = () => {
   const { getUserById, updateUser } = useUserStore();
@@ -11,10 +12,11 @@ const UpdateUser = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('');
 
   useEffect(() => {
     const queryParameters = new URLSearchParams(window.location.search);
-    const id = queryParameters.get('id');
+    const id = queryParameters.get('id') as string;
     setId(id);
     getUserById(id).then(({ email, password }) => {
       setEmail(email);
@@ -23,21 +25,28 @@ const UpdateUser = () => {
     });
   }, []);
 
-  const handleEmailChange = (event) => {
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setEmail(event.target.value);
   };
 
-  const handlePasswordChange = (event) => {
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setPassword(event.target.value);
   };
 
-  const handleButtonSubmit = (event) => {
+  const handleRoleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    setRole(event.target.value);
+  };
+
+  const handleButtonSubmit = (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
     event.preventDefault();
     console.log(id);
     if (!email.length || !password.length) return;
-    updateUser(id, { email, password }).then((res) => navigate('/'));
+    updateUser(id, { email, password, role }).then(() => navigate('/'));
   };
 
   return (
@@ -68,6 +77,24 @@ const UpdateUser = () => {
           </div>
           <div className="mb-5">
             <label
+              htmlFor="email"
+              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            >
+              Change your role
+            </label>
+            <input
+              type="text"
+              id="role"
+              name="role"
+              onChange={handleRoleChange}
+              value={role}
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="user"
+              required
+            />
+          </div>
+          <div className="mb-5">
+            <label
               htmlFor="password"
               className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
             >
@@ -84,7 +111,7 @@ const UpdateUser = () => {
             />
           </div>
 
-          <Button onClick={handleButtonSubmit}>Change User</Button>
+          <AppButton onClick={handleButtonSubmit}>Change User</AppButton>
         </form>
       </div>
     </div>

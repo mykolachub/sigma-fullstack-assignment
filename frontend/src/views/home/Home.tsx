@@ -1,8 +1,9 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import User from '../../components/user/User';
-import useUserStore from '../../utils/store';
+import useUserStore from '../../stores/user';
 import { useEffect } from 'react';
-import Button from '../../components/buttons/Button';
+import AppButton from '../../components/buttons/AppButton';
 
 const Home = () => {
   const { users, getAllUsers } = useUserStore();
@@ -19,7 +20,7 @@ const Home = () => {
             Users
           </h1>
           <Link to={'/create'}>
-            <Button className="main__create">Create User</Button>
+            <AppButton className="main_create">Create User</AppButton>
           </Link>
         </div>
 

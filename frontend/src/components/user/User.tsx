@@ -1,14 +1,19 @@
 import React from 'react';
-import ButtonSmall from '../buttons/ButtonSmall';
-import useUserStore from '../../utils/store';
+import useUserStore from '../../stores/user';
 import { useNavigate } from 'react-router-dom';
+import AppButtonSmall from '../buttons/AppButtonSmall';
 
-const User = ({ email, id }) => {
+interface UserProps {
+  email: string;
+  id: string;
+}
+
+const User = ({ email, id }: UserProps) => {
   const { deleteUser, getAllUsers } = useUserStore();
   const navigate = useNavigate();
 
-  const handleButtonSubmit = (event) => {
-    deleteUser(id).then((res) => getAllUsers());
+  const handleButtonSubmit = () => {
+    deleteUser(id).then(() => getAllUsers());
   };
 
   const handleUpdateUser = () => {
@@ -20,7 +25,7 @@ const User = ({ email, id }) => {
       <div onClick={handleUpdateUser} className="flex-1">
         <h3>{email}</h3>
       </div>
-      <ButtonSmall onClick={handleButtonSubmit}>Delete</ButtonSmall>
+      <AppButtonSmall onClick={handleButtonSubmit}>Delete</AppButtonSmall>
     </div>
   );
 };
