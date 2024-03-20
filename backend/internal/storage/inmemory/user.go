@@ -15,13 +15,13 @@ func NewUsersRepo() *UsersRepo {
 	users := []entity.User{
 		{
 			ID:       "2dXeeVItnr9Ci7trhCp10LFvtNJ",
-			Email:    "test@test.com",
+			Email:    "user",
 			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO", // test123
 			Role:     "user",
 		},
 		{
 			ID:       "2dXecVszaUb8AUybj33pcb4lR60",
-			Email:    "admin@test.com",
+			Email:    "admin",
 			Password: "$2a$10$9jrmat9.0TVc8nkgiSpUPu9ZHOrf7rHpq7csnkxUaESLFrzwQKtdO", // test123
 			Role:     "admin",
 		},

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
 	"sigma-test/internal/util"
@@ -96,8 +97,15 @@ func (s UserService) UpdateUser(id string, body request.User) (response.User, er
 		return response.User{}, errors.New("No such user")
 	}
 
+	fmt.Println(body)
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		return response.User{}, errors.New("failed to hash body")
+	}
+
 	bodyEntity := body.ToEntity()
 	bodyEntity.ID = id
+	bodyEntity.Password = string(hash)
 
 	updatedUser, err := s.repo.UpdateUser(bodyEntity, idx)
 	return updatedUser.ToResponse(), err
