@@ -1,41 +1,35 @@
-import useUserStore from '../../stores/user';
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import AppButton from '../../components/buttons/AppButton';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import useAuthStore from '../../stores/auth';
+import { SubmitHandler, useForm } from 'react-hook-form';
 
-enum RoleEnum {
-  user = 'user',
-  male = 'admin',
-}
+import './Login.css';
+import { useAuth } from '../../context/AuthProvider';
 
 interface Inputs {
   email: string;
-  role: RoleEnum;
   password: string;
 }
 
-const UpdateUser = () => {
-  const { getUserById, updateUser } = useUserStore();
+const Login = () => {
+  const { login, setAuthorization } = useAuthStore();
 
-  const [id] = useState<string>(() => {
-    const queryParameters = new URLSearchParams(window.location.search);
-    return queryParameters.get('id') || '';
-  });
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    defaultValues: async () => {
-      const user = await getUserById(id);
-      return user as Inputs;
-    },
-  });
+  } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      const res = await updateUser(id, data);
-      console.log(res);
+      await login(data);
+      setAuthorization();
+      navigate(from, { replace: true });
     } catch (error) {
       if (error instanceof Error) {
         console.log(error.message);
@@ -46,12 +40,12 @@ const UpdateUser = () => {
   return (
     <div className="page__wrapper">
       <div className="container">
-        <h1 className="headline">Update User</h1>
+        <h1 className="headline">Login</h1>
 
         <form className="form" onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-5">
             <label htmlFor="email" className="lable">
-              User email
+              Your email
             </label>
             <input
               {...register('email', { required: true })}
@@ -67,20 +61,8 @@ const UpdateUser = () => {
             )}
           </div>
           <div className="mb-5">
-            <label htmlFor="email" className="lable">
-              User role
-            </label>
-            <select
-              {...register('role', { required: true })}
-              className="select"
-            >
-              <option value="user">user</option>
-              <option value="admin">admin</option>
-            </select>
-          </div>
-          <div className="mb-5">
             <label htmlFor="password" className="lable">
-              User password
+              Your password
             </label>
             <input
               {...register('password', { required: true })}
@@ -95,11 +77,17 @@ const UpdateUser = () => {
             )}
           </div>
 
-          <AppButton type="submit">Update User</AppButton>
+          <AppButton type="submit" className="">
+            Log in to Account
+          </AppButton>
+          <br />
+          <NavLink to={'/signup'} className="block text-center">
+            Create new account
+          </NavLink>
         </form>
       </div>
     </div>
   );
 };
 
-export default UpdateUser;
+export default Login;

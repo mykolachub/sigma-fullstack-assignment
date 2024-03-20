@@ -1,57 +1,31 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { Route, Routes } from 'react-router-dom';
+import './App.css';
+
 import Home from './views/home/Home';
 import CreateUser from './views/create/CreateUser';
-import './App.css';
 import UpdateUser from './views/update/Update';
 import Signup from './views/signup/Signup';
-
-interface PageLayoutProps {
-  children: ReactNode;
-}
-
-const PageLayout = ({ children }: PageLayoutProps) => (
-  <div className="app__wrapper h-screen">{children}</div>
-);
+import Login from './views/login/Login';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="app__container">
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <PageLayout>
-              <Home />
-            </PageLayout>
-          }
-        />
-        <Route
-          path="/create"
-          element={
-            <PageLayout>
-              <CreateUser />
-            </PageLayout>
-          }
-        />
-        <Route
-          path="/update"
-          element={
-            <PageLayout>
-              <UpdateUser />
-            </PageLayout>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <PageLayout>
-              <Signup />
-            </PageLayout>
-          }
-        />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        {/* public routes */}
+        <Route path="signup" element={<Signup />} />
+        <Route path="login" element={<Login />} />
+
+        {/* private routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Home />} />
+          <Route path="create" element={<CreateUser />} />
+          <Route path="update" element={<UpdateUser />} />
+        </Route>
+      </Route>
+    </Routes>
   );
 }
 

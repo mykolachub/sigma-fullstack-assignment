@@ -1,7 +1,11 @@
-import useUserStore from '../../stores/user';
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppButton from '../../components/buttons/AppButton';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import useAuthStore from '../../stores/auth';
+import { SubmitHandler, useForm } from 'react-hook-form';
+
+import './Signup.css';
+import { NavLink } from 'react-router-dom';
 
 enum RoleEnum {
   user = 'user',
@@ -14,28 +18,19 @@ interface Inputs {
   password: string;
 }
 
-const UpdateUser = () => {
-  const { getUserById, updateUser } = useUserStore();
-
-  const [id] = useState<string>(() => {
-    const queryParameters = new URLSearchParams(window.location.search);
-    return queryParameters.get('id') || '';
-  });
+const Signup = () => {
+  const { signup } = useAuthStore();
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<Inputs>({
-    defaultValues: async () => {
-      const user = await getUserById(id);
-      return user as Inputs;
-    },
-  });
+  } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      const res = await updateUser(id, data);
-      console.log(res);
+      await signup(data);
+      navigate('/login');
     } catch (error) {
       if (error instanceof Error) {
         console.log(error.message);
@@ -46,12 +41,12 @@ const UpdateUser = () => {
   return (
     <div className="page__wrapper">
       <div className="container">
-        <h1 className="headline">Update User</h1>
+        <h1 className="headline">Signup</h1>
 
         <form className="form" onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-5">
             <label htmlFor="email" className="lable">
-              User email
+              Your email
             </label>
             <input
               {...register('email', { required: true })}
@@ -68,7 +63,7 @@ const UpdateUser = () => {
           </div>
           <div className="mb-5">
             <label htmlFor="email" className="lable">
-              User role
+              Your role
             </label>
             <select
               {...register('role', { required: true })}
@@ -80,7 +75,7 @@ const UpdateUser = () => {
           </div>
           <div className="mb-5">
             <label htmlFor="password" className="lable">
-              User password
+              Your password
             </label>
             <input
               {...register('password', { required: true })}
@@ -95,11 +90,15 @@ const UpdateUser = () => {
             )}
           </div>
 
-          <AppButton type="submit">Update User</AppButton>
+          <AppButton type="submit">Create Account</AppButton>
+          <br />
+          <NavLink to={'/login'} className="block text-center">
+            I have an account
+          </NavLink>
         </form>
       </div>
     </div>
   );
 };
 
-export default UpdateUser;
+export default Signup;

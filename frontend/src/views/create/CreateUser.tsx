@@ -1,100 +1,91 @@
 import React from 'react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useUserStore from '../../stores/user';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import AppButton from '../../components/buttons/AppButton';
+import useUserStore from '../../stores/user';
+import './CreateUser.css';
 
+enum RoleEnum {
+  user = 'user',
+  male = 'admin',
+}
+
+interface Inputs {
+  email: string;
+  role: RoleEnum;
+  password: string;
+}
 const CreateUser = () => {
   const { createUser } = useUserStore();
-  const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
-
-  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-  };
-
-  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setPassword(event.target.value);
-  };
-
-  const handleRoleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setRole(event.target.value);
-  };
-
-  const handleButtonSubmit = () => {
-    if (!email.length || !password.length) return;
-    createUser({ email, password, role }).then(() => navigate('/'));
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Inputs>();
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    try {
+      const response = await createUser(data);
+      console.log(response);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
+    }
   };
 
   return (
-    <div className="home main h-full">
-      <div className="main__content flex justify-center flex-col items-center h-full gap-10">
-        <h1 className="text-center text-gray-900 text-xl font-bold">
-          Create User
-        </h1>
+    <div className="page__wrapper">
+      <div className="container">
+        <h1 className="headline">Create New User</h1>
 
-        <form className="max-w-sm mx-auto">
+        <form className="form" onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-5">
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Your email
+            <label htmlFor="email" className="lable">
+              User email
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              onChange={handleEmailChange}
-              value={email}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="name@flowbite.com"
-              required
-            />
-          </div>
-          <div className="mb-5">
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-            >
-              Your role
-            </label>
-            <input
+              {...register('email', { required: true })}
+              aria-invalid={errors.email ? 'true' : 'false'}
               type="text"
-              id="role"
-              name="role"
-              onChange={handleRoleChange}
-              value={role}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="user"
-              required
+              className="input"
+              placeholder="name@domain.com"
             />
+            {errors.email && (
+              <span role="alert" className="input__alert">
+                This field is required
+              </span>
+            )}
           </div>
-
           <div className="mb-5">
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+            <label htmlFor="email" className="lable">
+              User role
+            </label>
+            <select
+              {...register('role', { required: true })}
+              className="select"
             >
-              Your password
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <div className="mb-5">
+            <label htmlFor="password" className="lable">
+              User password
             </label>
             <input
-              type="text"
-              id="password"
-              name="passwprd"
-              onChange={handlePasswordChange}
-              value={password}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              required
+              {...register('password', { required: true })}
+              aria-invalid={errors.password ? 'true' : 'false'}
+              type="password"
+              className="input"
             />
+            {errors.password && (
+              <span role="alert" className="input__alert">
+                This field is required
+              </span>
+            )}
           </div>
 
-          <AppButton onClick={handleButtonSubmit}>Create New User</AppButton>
+          <AppButton type="submit">Create New User</AppButton>
         </form>
       </div>
     </div>

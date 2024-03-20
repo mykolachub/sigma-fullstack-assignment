@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import User from '../../components/user/User';
 import useUserStore from '../../stores/user';
-import { useEffect } from 'react';
 import AppButton from '../../components/buttons/AppButton';
+import useAuthStore from '../../stores/auth';
 
 const Home = () => {
-  const { users, getAllUsers } = useUserStore();
+  const { user } = useAuthStore();
+  const isAdmin = user.role === 'admin';
+  const { users, getAllUsers } = useUserStore((state) => state);
 
   useEffect(() => {
-    getAllUsers();
+    const fetchUsers = async () => {
+      try {
+        const users = await getAllUsers();
+        useUserStore.setState({ users });
+      } catch (error) {
+        if (error instanceof Error) {
+          console.log(error.message);
+        }
+      }
+    };
+    fetchUsers();
   }, []);
 
   return (
@@ -19,13 +31,16 @@ const Home = () => {
           <h1 className="text-center text-gray-900 text-xl font-bold mt-20">
             Users
           </h1>
-          <Link to={'/create'}>
-            <AppButton className="main_create">Create User</AppButton>
+          <Link
+            to={isAdmin ? '/create' : '/'}
+            className={isAdmin ? '' : 'opacity-50'}
+          >
+            <AppButton>Create User</AppButton>
           </Link>
         </div>
 
-        {users.map(({ id, email }) => (
-          <User key={id} id={id} email={email} />
+        {users.map(({ id, email, role }) => (
+          <User key={id} id={id} email={email} role={role} />
         ))}
       </div>
     </div>

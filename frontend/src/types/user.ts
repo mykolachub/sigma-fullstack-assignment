@@ -10,3 +10,12 @@ export interface UserCreateDTO {
   password: string;
   role: string;
 }
+
+export interface UserLoginDTO {
+  email: string;
+  password: string;
+}
+
+export interface UserTokenDTO {
+  token: string;
+}
