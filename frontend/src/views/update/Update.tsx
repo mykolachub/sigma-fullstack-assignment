@@ -2,6 +2,7 @@ import useUserStore from '../../stores/user';
 import React, { useState } from 'react';
 import AppButton from '../../components/buttons/AppButton';
 import { useForm, SubmitHandler } from 'react-hook-form';
+import useToastStore from '../../stores/toast';
 
 enum RoleEnum {
   user = 'user',
@@ -16,6 +17,7 @@ interface Inputs {
 
 const UpdateUser = () => {
   const { getUserById, updateUser } = useUserStore();
+  const { addToastError, addToastInfo } = useToastStore();
 
   const [id] = useState<string>(() => {
     const queryParameters = new URLSearchParams(window.location.search);
@@ -34,11 +36,11 @@ const UpdateUser = () => {
   });
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      const res = await updateUser(id, data);
-      console.log(res);
+      await updateUser(id, data);
+      addToastInfo('user updated');
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        addToastError(error.message);
       }
     }
   };

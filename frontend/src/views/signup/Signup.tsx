@@ -6,6 +6,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 
 import './Signup.css';
 import { NavLink } from 'react-router-dom';
+import useToastStore from '../../stores/toast';
 
 enum RoleEnum {
   user = 'user',
@@ -22,6 +23,8 @@ const Signup = () => {
   const { signup } = useAuthStore();
   const navigate = useNavigate();
 
+  const { addToastError, addToastInfo } = useToastStore();
+
   const {
     register,
     handleSubmit,
@@ -31,9 +34,10 @@ const Signup = () => {
     try {
       await signup(data);
       navigate('/login');
+      addToastInfo('you successfully signed up');
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        addToastError(error.message);
       }
     }
   };

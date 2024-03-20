@@ -1,5 +1,7 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/auth';
+import Toast from './Toast';
+import React from 'react';
 
 const Layout = () => {
   const { user, logout } = useAuthStore();
@@ -22,6 +24,7 @@ const Layout = () => {
       )}
 
       <Outlet />
+      <Toast />
     </main>
   );
 };

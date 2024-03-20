@@ -3,6 +3,7 @@ import useUserStore from '../../stores/user';
 import { useNavigate } from 'react-router-dom';
 import AppButtonSmall from '../buttons/AppButtonSmall';
 import useAuthStore from '../../stores/auth';
+import useToastStore from '../../stores/toast';
 
 interface UserProps {
   email: string;
@@ -19,25 +20,34 @@ const User = ({ email, id, role }: UserProps) => {
   const { deleteUser, getAllUsers } = useUserStore();
   const navigate = useNavigate();
 
+  const { addToastError, addToastInfo } = useToastStore();
+
   const handleDeleteUser = async () => {
-    if (!isAdmin && !isOwner) return;
+    if (!isAdmin && !isOwner) {
+      addToastError('you do not have permission');
+      return;
+    }
     try {
       await deleteUser(id);
       const users = await getAllUsers();
       useUserStore.setState({ users: users });
+      addToastInfo('user deleted');
       if (isOwner) {
         logout();
         navigate('/login');
       }
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        addToastError(error.message);
       }
     }
   };
 
   const handleUpdateUser = () => {
-    if (!isAdmin && !isOwner) return;
+    if (!isAdmin && !isOwner) {
+      addToastError('you do not have permission');
+      return;
+    }
     navigate(`/update?id=${id}`);
   };
 

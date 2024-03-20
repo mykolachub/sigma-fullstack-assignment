@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import AppButton from '../../components/buttons/AppButton';
@@ -6,7 +5,7 @@ import useAuthStore from '../../stores/auth';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
 import './Login.css';
-import { useAuth } from '../../context/AuthProvider';
+import useToastStore from '../../stores/toast';
 
 interface Inputs {
   email: string;
@@ -15,6 +14,7 @@ interface Inputs {
 
 const Login = () => {
   const { login, setAuthorization } = useAuthStore();
+  const { addToastError, addToastInfo } = useToastStore();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,9 +30,10 @@ const Login = () => {
       await login(data);
       setAuthorization();
       navigate(from, { replace: true });
+      addToastInfo('you successfully logged in');
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        addToastError(error.message);
       }
     }
   };

@@ -4,11 +4,14 @@ import User from '../../components/user/User';
 import useUserStore from '../../stores/user';
 import AppButton from '../../components/buttons/AppButton';
 import useAuthStore from '../../stores/auth';
+import useToastStore from '../../stores/toast';
 
 const Home = () => {
   const { user } = useAuthStore();
   const isAdmin = user.role === 'admin';
   const { users, getAllUsers } = useUserStore((state) => state);
+
+  const { addToastError } = useToastStore();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -17,12 +20,16 @@ const Home = () => {
         useUserStore.setState({ users });
       } catch (error) {
         if (error instanceof Error) {
-          console.log(error.message);
+          addToastError(error.message);
         }
       }
     };
     fetchUsers();
   }, []);
+
+  const handleCreateUser = () => {
+    if (!isAdmin) addToastError('you do not have permissions');
+  };
 
   return (
     <div className="home main">
@@ -35,7 +42,7 @@ const Home = () => {
             to={isAdmin ? '/create' : '/'}
             className={isAdmin ? '' : 'opacity-50'}
           >
-            <AppButton>Create User</AppButton>
+            <AppButton onClick={handleCreateUser}>Create User</AppButton>
           </Link>
         </div>
 

@@ -3,6 +3,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import AppButton from '../../components/buttons/AppButton';
 import useUserStore from '../../stores/user';
 import './CreateUser.css';
+import useToastStore from '../../stores/toast';
 
 enum RoleEnum {
   user = 'user',
@@ -16,6 +17,7 @@ interface Inputs {
 }
 const CreateUser = () => {
   const { createUser } = useUserStore();
+  const { addToastError, addToastInfo } = useToastStore();
 
   const {
     register,
@@ -24,11 +26,11 @@ const CreateUser = () => {
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     try {
-      const response = await createUser(data);
-      console.log(response);
+      await createUser(data);
+      addToastInfo('user created');
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        addToastError(error.message);
       }
     }
   };
