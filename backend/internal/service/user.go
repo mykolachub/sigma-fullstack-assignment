@@ -24,12 +24,7 @@ func (s UserService) SignUp(body request.User) (response.User, error) {
 		return response.User{}, errors.New("user already exists")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
-	if err != nil {
-		return response.User{}, errors.New("failed to hash body")
-	}
-
-	return s.CreateUser(request.User{Email: body.Email, Password: string(hash), Role: body.Role})
+	return s.CreateUser(request.User{Email: body.Email, Password: body.Password, Role: body.Role})
 }
 
 func (s UserService) Login(body request.User) (string, error) {
@@ -82,8 +77,14 @@ func (s UserService) CreateUser(user request.User) (response.User, error) {
 		return response.User{}, errors.New("User already exists")
 	}
 
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		return response.User{}, errors.New("failed to hash body")
+	}
+
 	userEntity := user.ToEntity()
 	userEntity.ID = helpers.GetKsuid()
+	userEntity.Password = string(hash)
 
 	new_user, err := s.repo.AddUser(userEntity)
 	return new_user.ToResponse(), err
