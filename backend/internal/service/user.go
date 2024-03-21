@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
 	"sigma-test/internal/util"
@@ -24,12 +25,7 @@ func (s UserService) SignUp(body request.User) (response.User, error) {
 		return response.User{}, errors.New("user already exists")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
-	if err != nil {
-		return response.User{}, errors.New("failed to hash body")
-	}
-
-	return s.CreateUser(request.User{Email: body.Email, Password: string(hash), Role: body.Role})
+	return s.CreateUser(request.User{Email: body.Email, Password: body.Password, Role: body.Role})
 }
 
 func (s UserService) Login(body request.User) (string, error) {
@@ -82,8 +78,14 @@ func (s UserService) CreateUser(user request.User) (response.User, error) {
 		return response.User{}, errors.New("User already exists")
 	}
 
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		return response.User{}, errors.New("failed to hash body")
+	}
+
 	userEntity := user.ToEntity()
 	userEntity.ID = helpers.GetKsuid()
+	userEntity.Password = string(hash)
 
 	new_user, err := s.repo.AddUser(userEntity)
 	return new_user.ToResponse(), err
@@ -95,8 +97,15 @@ func (s UserService) UpdateUser(id string, body request.User) (response.User, er
 		return response.User{}, errors.New("No such user")
 	}
 
+	fmt.Println(body)
+	hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
+	if err != nil {
+		return response.User{}, errors.New("failed to hash body")
+	}
+
 	bodyEntity := body.ToEntity()
 	bodyEntity.ID = id
+	bodyEntity.Password = string(hash)
 
 	updatedUser, err := s.repo.UpdateUser(bodyEntity, idx)
 	return updatedUser.ToResponse(), err

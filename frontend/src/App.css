@@ -2,10 +2,49 @@
     width: 100%;
     min-height: 100vh;
 }
-  
+
 
 .app__wrapper {
     margin: 0 auto;
     max-width: 720px;
     width: calc(100% - 20px);
+}
+
+.app__login_wrapper,
+.app__signup_wrapper {
+  height: 100%;
+}
+
+.app__login_container,
+.app__signup_container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.app__login_headline,
+.app__signup_headline {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  color: #111827;
+}
+
+.app__login_form,
+.app__signup_form {
+  max-width: 24rem;
+}
+
+.app__login_label,
+.app__signup_label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: #111827;
 }
