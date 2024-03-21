@@ -2,8 +2,10 @@ import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import AppButton from '../../components/buttons/AppButton';
 import useUserStore from '../../stores/user';
-import './CreateUser.css';
 import useToastStore from '../../stores/toast';
+import AppInput from '../../components/inputs/AppInput';
+import AppInputAlert from '../../components/alerts/AppInputAlert';
+import AppSelect from '../../components/selects/AppSelect';
 
 enum RoleEnum {
   user = 'user',
@@ -36,55 +38,43 @@ const CreateUser = () => {
   };
 
   return (
-    <div className="page__wrapper">
-      <div className="container">
-        <h1 className="headline">Create New User</h1>
+    <div className="app__signup_wrapper">
+      <div className="app__signup_container">
+        <h1 className="app__signup_headline">Create New User</h1>
 
-        <form className="form" onSubmit={handleSubmit(onSubmit)}>
+        <form className="app__signup_form" onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-5">
-            <label htmlFor="email" className="lable">
+            <label htmlFor="email" className="app__signup_label">
               User email
             </label>
-            <input
+            <AppInput
               {...register('email', { required: true })}
               aria-invalid={errors.email ? 'true' : 'false'}
               type="text"
-              className="input"
               placeholder="name@domain.com"
             />
-            {errors.email && (
-              <span role="alert" className="input__alert">
-                This field is required
-              </span>
-            )}
+            {errors.email && <AppInputAlert />}
           </div>
           <div className="mb-5">
-            <label htmlFor="email" className="lable">
+            <label htmlFor="email" className="app__signup_label">
               User role
             </label>
-            <select
-              {...register('role', { required: true })}
-              className="select"
-            >
+            <AppSelect {...register('role', { required: true })}>
               <option value="user">user</option>
               <option value="admin">admin</option>
-            </select>
+            </AppSelect>
           </div>
           <div className="mb-5">
-            <label htmlFor="password" className="lable">
+            <label htmlFor="password" className="app__signup_label">
               User password
             </label>
-            <input
+            <AppInput
               {...register('password', { required: true })}
               aria-invalid={errors.password ? 'true' : 'false'}
               type="password"
               className="input"
             />
-            {errors.password && (
-              <span role="alert" className="input__alert">
-                This field is required
-              </span>
-            )}
+            {errors.password && <AppInputAlert />}
           </div>
 
           <AppButton type="submit">Create New User</AppButton>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import AppButtonSmall from '../buttons/AppButtonSmall';
 import useAuthStore from '../../stores/auth';
 import useToastStore from '../../stores/toast';
+import './User.css';
 
 interface UserProps {
   email: string;
@@ -53,7 +54,7 @@ const User = ({ email, id, role }: UserProps) => {
 
   return (
     <div
-      className="user__wrapper flex w-full justify-between items-center cursor-pointer rounded-lg bg-gray-100 p-2 m-1"
+      className="user__wrapper"
       style={{ minHeight: '70px', opacity: isAdmin || isOwner ? '1' : '0.5' }}
     >
       <div onClick={handleUpdateUser} className="flex-1">
