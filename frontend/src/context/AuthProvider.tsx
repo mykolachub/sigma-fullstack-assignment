@@ -3,44 +3,36 @@ import { createContext, useState } from 'react';
 
 import { UserDTO } from '../types/user';
 import useAuthStore from '../stores/auth';
-import axios, { AxiosResponse } from 'axios';
 
 type AuthProviderProps = PropsWithChildren;
 
-const AuthContext = createContext<Promise<AxiosResponse<ServerData>> | null>(
-  null,
-);
-
-interface ServerData {
-  data: UserDTO;
-}
+const AuthContext = createContext<Promise<UserDTO> | null>(null);
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-  const { authed, setToken } = useAuthStore();
+  const { authed, setToken, me } = useAuthStore();
 
   const localToken = window.localStorage.getItem('access_token');
-  const [userPromise, setUserPromise] = useState<Promise<
-    AxiosResponse<ServerData>
-  > | null>(() => {
-    if (!localToken) return null;
-    setToken(localToken);
-    return axios.get<ServerData>('http://localhost:8080/api/me', {
-      headers: { Authorization: `Bearer ${localToken}` },
-    });
+
+  const [userPromise, setUserPromise] = useState<Promise<UserDTO> | null>(
+    () => {
+      if (!localToken) return null;
+      setToken(localToken);
+      return me();
+    },
+  );
+
+  window.addEventListener('storage', () => {
+    // in case access token has been manually changed in application store
+    if (localToken !== window.localStorage.getItem('access_token')) {
+      setUserPromise(null);
+    }
   });
 
   useEffect(() => {
     // authed has been changed in setAuthorization after login
-    if (!localToken) {
-      setUserPromise(null);
-      return;
-    }
+    if (!localToken) return setUserPromise(null);
     setToken(localToken);
-    setUserPromise(
-      axios.get<ServerData>('http://localhost:8080/api/me', {
-        headers: { Authorization: `Bearer ${localToken}` },
-      }),
-    );
+    setUserPromise(me());
   }, [authed]);
 
   return (

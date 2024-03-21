@@ -14,7 +14,6 @@ const API_URL = config.env.apiKey;
 
 interface UserAuthState {
   user: UserDTO;
-  admin: boolean;
   authed: boolean;
   token: string | null;
   signup: (data: UserCreateDTO) => Promise<UserDTO>;
@@ -23,12 +22,11 @@ interface UserAuthState {
   setUser: (data: UserDTO) => void;
   setToken: (token: string) => void;
   logout: () => void;
-  me: () => void;
+  me: () => Promise<UserDTO>;
 }
 
 const useAuthStore = create<UserAuthState>((set) => ({
   user: <UserDTO>{},
-  admin: false,
   authed: false,
   token: null,
   signup: async (data: UserCreateDTO): Promise<UserDTO> => {
@@ -55,7 +53,6 @@ const useAuthStore = create<UserAuthState>((set) => ({
     if (!localToken) {
       set({
         user: <UserDTO>{},
-        admin: false,
         authed: false,
         token: null,
       });
@@ -67,9 +64,19 @@ const useAuthStore = create<UserAuthState>((set) => ({
   setToken: (token: string): void => set({ token: token }),
   logout: (): void => {
     localStorage.removeItem('access_token');
-    set({ user: <UserDTO>{}, admin: false, authed: false, token: '' });
+    set({ user: <UserDTO>{}, authed: false, token: '' });
   },
-  me: async () => {},
+  me: async (): Promise<UserDTO> => {
+    try {
+      const token = `Bearer ${useAuthStore.getState().token}`;
+      const response = await axios.get(API_URL + '/me', {
+        headers: { Authorization: token },
+      });
+      return response.data.data as UserDTO;
+    } catch (error) {
+      throw new Error(handleAxiosError(error));
+    }
+  },
 }));
 
 export default useAuthStore;

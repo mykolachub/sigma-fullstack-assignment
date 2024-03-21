@@ -5,30 +5,29 @@ import React from 'react';
 import useAuthStore from '../stores/auth';
 
 const ProtectedRoute = () => {
-  const { setUser, setAuthorization } = useAuthStore();
+  const { setUser, setAuthorization, logout } = useAuthStore();
   const userPromise = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [authenticated, setAuthenticated] = useState(false);
 
+  const denyAccessAndRedirect = () => {
+    logout();
+    setAuthenticated(false);
+    navigate('/login', { replace: true, state: { from: location } });
+  };
+
   useEffect(() => {
-    if (!userPromise) {
-      setAuthenticated(false);
-      // After login user gets redirected to the previous page
-      navigate('/login', { replace: true, state: { from: location } });
-      return;
-    }
+    if (!userPromise) return denyAccessAndRedirect();
     userPromise
-      .then((res) => {
-        console.log(res.data);
-        const { data: user } = res.data;
+      .then((user) => {
         setAuthenticated(user !== null);
 
         setUser(user);
         setAuthorization();
       })
-      .catch((err: unknown) => console.log(err));
+      .catch(() => denyAccessAndRedirect());
   }, [userPromise]);
 
   return authenticated !== null ? <Outlet /> : null;
