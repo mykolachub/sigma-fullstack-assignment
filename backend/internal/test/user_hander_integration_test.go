@@ -34,7 +34,7 @@ func TestSignupIntegration(t *testing.T) {
 
 		requestBody := []byte(`{"email": "test", "password": "test", "role": "user"}`)
 		body := bytes.NewReader(requestBody)
-		req, err := http.NewRequest("POST", "/api/signup", body)
+		req, err := http.NewRequest("POST", "/api/user/signup", body)
 		if err != nil {
 			require.NoError(t, err)
 		}
@@ -48,7 +48,7 @@ func TestSignupIntegration(t *testing.T) {
 		router := app.SetupRouter()
 		res := httptest.NewRecorder()
 
-		req, err := http.NewRequest("POST", "/api/signup", nil)
+		req, err := http.NewRequest("POST", "/api/user/signup", nil)
 		if err != nil {
 			require.NoError(t, err)
 		}
@@ -62,9 +62,9 @@ func TestSignupIntegration(t *testing.T) {
 		router := app.SetupRouter()
 		res := httptest.NewRecorder()
 
-		jsonBody := []byte(`{"email": "test@test.com", "password": "test123", "role": "user"}`)
+		jsonBody := []byte(`{"email": "user", "password": "test123", "role": "user"}`)
 		bodyReader := bytes.NewReader(jsonBody)
-		req, err := http.NewRequest("POST", "/api/signup", bodyReader)
+		req, err := http.NewRequest("POST", "/api/user/signup", bodyReader)
 		if err != nil {
 			require.NoError(t, err)
 		}

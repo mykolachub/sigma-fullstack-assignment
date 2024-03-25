@@ -31,7 +31,10 @@ func SetupRouter() *gin.Engine {
 	return r
 }
 
-func Run( /* additional configs */ ) {
+func Run() {
+	env := config.ConfigEnv()
+	port := ":" + env.Port
+
 	r := SetupRouter()
-	r.Run()
+	r.Run(port)
 }
