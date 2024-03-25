@@ -10,7 +10,7 @@ import {
 } from '../types/user';
 import { handleAxiosError } from '../utils/errors/axios';
 
-const API_URL = config.env.apiKey;
+const API_URL = config.env.apiUrl;
 
 interface UserAuthState {
   user: UserDTO;

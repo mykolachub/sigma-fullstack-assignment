@@ -6,7 +6,7 @@ import { UserDTO, UserCreateDTO } from '../types/user';
 import { handleAxiosError } from '../utils/errors/axios';
 import useAuthStore from './auth';
 
-const API_URL = config.env.apiKey;
+const API_URL = config.env.apiUrl;
 
 interface UserStoreState {
   users: UserDTO[];
