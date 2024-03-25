@@ -2,10 +2,15 @@ package util
 
 import (
 	"errors"
-	"os"
+	"sigma-test/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+)
+
+var (
+	env       = config.ConfigEnv()
+	jwtSecret = env.JWTSecret
 )
 
 func GenerateJWTToken(id, role string) (string, error) {
@@ -15,12 +20,12 @@ func GenerateJWTToken(id, role string) (string, error) {
 		"exp":  time.Now().Add(time.Hour * 24).Unix(),
 	})
 
-	return token.SignedString([]byte(os.Getenv("SECRET")))
+	return token.SignedString([]byte(jwtSecret))
 }
 
 func ParseAndValidateJWTToken(accessToken string) (*jwt.Token, error) {
 	token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("SECRET")), nil
+		return []byte(jwtSecret), nil
 	})
 
 	if err != nil {
