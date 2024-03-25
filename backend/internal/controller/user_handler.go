@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const playloadUserID = "payload_user_id"
+
 type UserHandler struct {
 	userSvc UserService
 }
@@ -15,12 +17,12 @@ type UserHandler struct {
 func InitUserHandler(r *gin.Engine, userSvc UserService) {
 	handler := UserHandler{userSvc: userSvc}
 
-	r.POST("/api/signup", handler.signup)
-	r.POST("/api/login", handler.login)
+	r.POST("/api/user/signup", handler.signup)
+	r.POST("/api/user/login", handler.login)
 
 	r.Use(middleware.Protect())
 
-	r.GET("/api/me", handler.me)
+	r.GET("/api/user/me", handler.me)
 
 	r.GET("/api/user", handler.getUserById)
 	r.GET("/api/users", handler.getAllUsers)
@@ -31,7 +33,7 @@ func InitUserHandler(r *gin.Engine, userSvc UserService) {
 }
 
 func (h UserHandler) me(c *gin.Context) {
-	userId := c.Keys["payload_user_id"].(string)
+	userId := c.Keys[playloadUserID].(string)
 	user, err := h.userSvc.GetUserById(userId)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})

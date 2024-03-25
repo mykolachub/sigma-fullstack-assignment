@@ -11,6 +11,8 @@ type Services struct {
 }
 
 // Interface of methods for working with user service
+//
+//go:generate mockery --name=UserService
 type UserService interface {
 	SignUp(body request.User) (response.User, error)
 	Login(body request.User) (string, error)

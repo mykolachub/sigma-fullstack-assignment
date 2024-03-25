@@ -31,7 +31,7 @@ const useAuthStore = create<UserAuthState>((set) => ({
   token: null,
   signup: async (data: UserCreateDTO): Promise<UserDTO> => {
     try {
-      const response = await axios.post(API_URL + '/signup', data);
+      const response = await axios.post(API_URL + '/user/signup', data);
       return response.data.data as UserDTO;
     } catch (error) {
       throw new Error(handleAxiosError(error));
@@ -39,7 +39,7 @@ const useAuthStore = create<UserAuthState>((set) => ({
   },
   login: async (data: UserLoginDTO): Promise<UserTokenDTO> => {
     try {
-      const response = await axios.post(API_URL + '/login', data);
+      const response = await axios.post(API_URL + '/user/login', data);
       const { token } = response.data;
       localStorage.setItem('access_token', token);
       // TODO: get refresh token, set to localStorage
@@ -69,7 +69,7 @@ const useAuthStore = create<UserAuthState>((set) => ({
   me: async (): Promise<UserDTO> => {
     try {
       const token = `Bearer ${useAuthStore.getState().token}`;
-      const response = await axios.get(API_URL + '/me', {
+      const response = await axios.get(API_URL + '/user/me', {
         headers: { Authorization: token },
       });
       return response.data.data as UserDTO;
