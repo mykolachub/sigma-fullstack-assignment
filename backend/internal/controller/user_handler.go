@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sigma-test/internal/middleware"
 	"sigma-test/internal/request"
+	"sigma-test/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -36,100 +37,129 @@ func (h UserHandler) me(c *gin.Context) {
 	userId := c.Keys[playloadUserID].(string)
 	user, err := h.userSvc.GetUserById(userId)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
 }
 
 func (h UserHandler) signup(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body"})
+		message := util.MakeMessage(util.MessageError, "failed to read body", nil)
+		c.JSON(http.StatusBadRequest, message)
 		return
 	}
 
 	user, err := h.userSvc.SignUp(body)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
 }
 
 func (h UserHandler) login(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read body"})
+		message := util.MakeMessage(util.MessageError, "failed to read body", nil)
+		c.JSON(http.StatusBadRequest, message)
 		return
 	}
 
 	token, err := h.userSvc.Login(body)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", token))
 }
 
 func (h UserHandler) getAllUsers(c *gin.Context) {
 	users, err := h.userSvc.GetAllUsers()
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", users))
 }
 
 func (h UserHandler) getUserById(c *gin.Context) {
 	id := c.Query("id")
-	user, err := h.userSvc.GetUserById(id)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+	if id == "" {
+		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+
+	user, err := h.userSvc.GetUserById(id)
+	if err != nil {
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
+		return
+	}
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
 }
 
 func (h UserHandler) createUser(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusBadRequest, message)
 		return
 	}
 
 	user, err := h.userSvc.CreateUser(body)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"data": user})
+	c.JSON(http.StatusCreated, util.MakeMessage(util.MessageSuccess, "user created", user))
 }
 
 func (h UserHandler) updateUser(c *gin.Context) {
 	id := c.Query("id")
+	if id == "" {
+		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
+		return
+	}
 	var body request.User
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusBadRequest, message)
 		return
 	}
 
 	user, err := h.userSvc.UpdateUser(id, body)
 	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": user})
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "user updated", user))
 }
 
 func (h UserHandler) deleteUser(c *gin.Context) {
 	id := c.Query("id")
-	err := h.userSvc.DeleteUser(id)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+	if id == "" {
+		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "User successfully deleted"})
+
+	user, err := h.userSvc.DeleteUser(id)
+	if err != nil {
+		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		c.JSON(http.StatusUnprocessableEntity, message)
+		return
+	}
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "user deleted", user))
 }
