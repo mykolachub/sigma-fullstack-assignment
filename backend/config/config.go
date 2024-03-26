@@ -7,8 +7,13 @@ import (
 )
 
 type env struct {
-	JWTSecret string `mapstructure:"JWT_SECRET"`
-	Port      string `mapstructure:"PORT"`
+	JWTSecret    string `mapstructure:"JWT_SECRET"`
+	Port         string `mapstructure:"PORT"`
+	DBUser       string `mapstructure:"DB_USER"`
+	DBPassword   string `mapstructure:"DB_PASSWORD"`
+	DBName       string `mapstructure:"DB_NAME"`
+	DBSSLMode    string `mapstructure:"DB_SSLMODE"`
+	DBConnString string `mapstructure:"DB_CONN_STRING"`
 }
 
 func ConfigEnv() *env {

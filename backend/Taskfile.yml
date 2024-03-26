@@ -1,0 +1,34 @@
+version: '3'
+
+dotenv:
+- '.env'
+
+tasks:
+  server:
+    desc: Starts API Server
+    aliases: [s]
+    cmds:
+    - go run main.go
+
+  app:
+    desc: Starts API Server and Database
+    aliases: [a]
+    cmds:
+    - task: db:run
+    - task: server
+
+  db:run:
+    desc: Starts Database
+    cmds:
+    - docker-compose up -d
+
+  db:stop:
+    desc: Stops Database
+    cmds:
+    - docker-compose down
+
+  db:migrate:
+    desc: Starts Database Migrations
+    dir: internal/storage/postgres/migrations
+    cmds:
+    - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "$DB_CONN_STRING" up
