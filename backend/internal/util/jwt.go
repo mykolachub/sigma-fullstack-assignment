@@ -1,7 +1,6 @@
 package util
 
 import (
-	"errors"
 	"sigma-test/config"
 	"time"
 
@@ -15,9 +14,9 @@ var (
 
 func GenerateJWTToken(id, role string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   id,
-		"role": role,
-		"exp":  time.Now().Add(time.Hour * 24).Unix(),
+		config.JWTClaimsId:   id,
+		config.JWTClaimsRole: role,
+		config.JWTClaimsExp:  time.Now().Add(time.Hour * 24).Unix(),
 	})
 
 	return token.SignedString([]byte(jwtSecret))
@@ -28,13 +27,9 @@ func ParseAndValidateJWTToken(accessToken string) (*jwt.Token, error) {
 		return []byte(jwtSecret), nil
 	})
 
-	if err != nil {
-		return nil, err
+	if err != nil || !token.Valid {
+		return nil, config.ErrInvalidToken
 	}
 
-	if !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	return token, err
+	return token, nil
 }

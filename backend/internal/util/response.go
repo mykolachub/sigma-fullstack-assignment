@@ -1,14 +1,14 @@
 package util
 
-import "github.com/gin-gonic/gin"
-
 const (
 	MessageError   = 0
 	MessageSuccess = 1
 )
 
-func MakeMessage(messType int, message string, data interface{}) gin.H {
-	response := gin.H{}
+type MessageResponse map[string]any
+
+func MakeMessage(messType int, message string, data interface{}) MessageResponse {
+	response := MessageResponse{}
 
 	switch messType {
 	case MessageError:

@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
+	"sigma-test/config"
 	"sigma-test/internal/entity"
 	"strings"
 	"time"
@@ -100,7 +100,7 @@ func (s *UsersRepo) UpdateUser(id string, data entity.User) (entity.User, error)
 	}
 
 	if len(updates) == 0 {
-		return entity.User{}, errors.New("empty update body")
+		return entity.User{}, config.ErrEmptyUpdateBody
 	}
 
 	query := "UPDATE users SET " + strings.Join(updates, ", ") + " WHERE id = $1 RETURNING *"
@@ -120,7 +120,7 @@ func (s *UsersRepo) DeleteUser(id string) (entity.User, error) {
 	err := s.db.QueryRow(query, id).Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
 
 	if err != nil {
-		return entity.User{}, nil
+		return entity.User{}, err
 	}
 
 	return user, nil

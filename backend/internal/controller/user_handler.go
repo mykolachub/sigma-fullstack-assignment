@@ -2,14 +2,13 @@ package controller
 
 import (
 	"net/http"
+	"sigma-test/config"
 	"sigma-test/internal/middleware"
 	"sigma-test/internal/request"
 	"sigma-test/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
-
-const playloadUserID = "payload_user_id"
 
 type UserHandler struct {
 	userSvc UserService
@@ -34,20 +33,20 @@ func InitUserHandler(r *gin.Engine, userSvc UserService) {
 }
 
 func (h UserHandler) me(c *gin.Context) {
-	userId := c.Keys[playloadUserID].(string)
+	userId := c.Keys[config.PayloadUserId].(string)
 	user, err := h.userSvc.GetUserById(userId)
 	if err != nil {
 		message := util.MakeMessage(util.MessageError, err.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
 }
 
 func (h UserHandler) signup(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, "failed to read body", nil)
+		message := util.MakeMessage(util.MessageError, config.ErrFailedReadBody.Error(), nil)
 		c.JSON(http.StatusBadRequest, message)
 		return
 	}
@@ -58,13 +57,13 @@ func (h UserHandler) signup(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
 }
 
 func (h UserHandler) login(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, "failed to read body", nil)
+		message := util.MakeMessage(util.MessageError, config.ErrFailedReadBody.Error(), nil)
 		c.JSON(http.StatusBadRequest, message)
 		return
 	}
@@ -76,7 +75,7 @@ func (h UserHandler) login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", token))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, token))
 }
 
 func (h UserHandler) getAllUsers(c *gin.Context) {
@@ -86,13 +85,13 @@ func (h UserHandler) getAllUsers(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", users))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, users))
 }
 
 func (h UserHandler) getUserById(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Query(config.QueryId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
@@ -103,7 +102,7 @@ func (h UserHandler) getUserById(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "", user))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
 }
 
 func (h UserHandler) createUser(c *gin.Context) {
@@ -120,13 +119,13 @@ func (h UserHandler) createUser(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusCreated, util.MakeMessage(util.MessageSuccess, "user created", user))
+	c.JSON(http.StatusCreated, util.MakeMessage(util.MessageSuccess, config.MsgUserCreated, user))
 }
 
 func (h UserHandler) updateUser(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Query(config.QueryId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
@@ -144,13 +143,13 @@ func (h UserHandler) updateUser(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "user updated", user))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgUserUpdated, user))
 }
 
 func (h UserHandler) deleteUser(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Query(config.QueryId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, "missing id parameter", nil)
+		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
@@ -161,5 +160,5 @@ func (h UserHandler) deleteUser(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, "user deleted", user))
+	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgUserDeleted, user))
 }

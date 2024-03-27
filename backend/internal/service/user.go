@@ -1,7 +1,7 @@
 package service
 
 import (
-	"errors"
+	"sigma-test/config"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
 	"sigma-test/internal/util"
@@ -18,7 +18,7 @@ func NewUserService(r UserRepo) UserService {
 func (s UserService) SignUp(body request.User) (response.User, error) {
 	_, err := s.GetUserByEmail(body.Email)
 	if err == nil {
-		return response.User{}, errors.New("user already exists")
+		return response.User{}, config.ErrUserExists
 	}
 
 	return s.CreateUser(request.User{Email: body.Email, Password: body.Password, Role: body.Role})
@@ -27,11 +27,11 @@ func (s UserService) SignUp(body request.User) (response.User, error) {
 func (s UserService) Login(body request.User) (string, error) {
 	user, err := s.GetUserByEmail(body.Email)
 	if err != nil {
-		return "", errors.New("invalid email or password")
+		return "", config.ErrInvalidCredentials
 	}
 
 	if _, err := util.ComparePasswordAndHash(body.Password, user.Password); err != nil {
-		return "", err
+		return "", config.ErrInvalidCredentials
 	}
 
 	return util.GenerateJWTToken(user.ID, user.Role)
@@ -39,19 +39,22 @@ func (s UserService) Login(body request.User) (string, error) {
 
 func (s UserService) GetAllUsers() ([]response.User, error) {
 	users, err := s.repo.GetUsers()
+	if err != nil {
+		return []response.User{}, config.ErrFailedGetUser
+	}
 
 	responses := make([]response.User, len(users))
 	for i, v := range users {
 		responses[i] = v.ToResponse()
 	}
 
-	return responses, err
+	return responses, nil
 }
 
 func (s UserService) GetUserById(id string) (response.User, error) {
 	user, err := s.repo.GetUser(id)
 	if err != nil {
-		return response.User{}, errors.New("No such user")
+		return response.User{}, config.ErrNoUser
 	}
 
 	return user.ToResponse(), nil
@@ -60,7 +63,7 @@ func (s UserService) GetUserById(id string) (response.User, error) {
 func (s UserService) GetUserByEmail(email string) (response.User, error) {
 	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
-		return response.User{}, errors.New("No such user")
+		return response.User{}, config.ErrNoUser
 	}
 
 	return user.ToResponse(), nil
@@ -69,7 +72,7 @@ func (s UserService) GetUserByEmail(email string) (response.User, error) {
 func (s UserService) CreateUser(data request.User) (response.User, error) {
 	hash, err := util.HashPassword(data.Password)
 	if err != nil {
-		return response.User{}, errors.New("failed to hash body")
+		return response.User{}, config.ErrFailedHashPassword
 	}
 
 	user := data.ToEntity()
@@ -77,16 +80,16 @@ func (s UserService) CreateUser(data request.User) (response.User, error) {
 
 	new_user, err := s.repo.CreateUser(user)
 	if err != nil {
-		return response.User{}, errors.New("failed to create user")
-
+		return response.User{}, config.ErrFailedCreateUser
 	}
+
 	return new_user.ToResponse(), nil
 }
 
 func (s UserService) UpdateUser(id string, data request.User) (response.User, error) {
 	hash, err := util.HashPassword(data.Password)
 	if err != nil {
-		return response.User{}, errors.New("failed to hash body")
+		return response.User{}, config.ErrFailedHashPassword
 	}
 
 	updateBody := data.ToEntity()
@@ -95,10 +98,18 @@ func (s UserService) UpdateUser(id string, data request.User) (response.User, er
 	}
 
 	updatedUser, err := s.repo.UpdateUser(id, updateBody)
-	return updatedUser.ToResponse(), err
+	if err != nil {
+		return response.User{}, config.ErrFailedUpdateUser
+	}
+
+	return updatedUser.ToResponse(), nil
 }
 
 func (s UserService) DeleteUser(id string) (response.User, error) {
 	user, err := s.repo.DeleteUser(id)
-	return user.ToResponse(), err
+	if err != nil {
+		return response.User{}, config.ErrFailedDeleteUser
+	}
+
+	return user.ToResponse(), nil
 }

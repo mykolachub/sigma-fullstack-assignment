@@ -1,26 +1,20 @@
 package middleware
 
 import (
-	"errors"
 	"net/http"
+	"sigma-test/config"
 	"sigma-test/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const authorizationHeader = "authorization"
-
-const (
-	payloadUserRole = "payload_user_role"
-	payloadUserId   = "payload_user_id"
-)
-
 func OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		role := ctx.Keys[payloadUserRole]
-		if role != "admin" {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
+		role := ctx.Keys[config.PayloadUserRole]
+		if role != config.AdminRole {
+			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
 
@@ -30,14 +24,15 @@ func OnlyAdmin() gin.HandlerFunc {
 
 func OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		payloadRole := ctx.Keys[payloadUserRole]
-		payloadId := ctx.Keys[payloadUserId]
+		payloadRole := ctx.Keys[config.PayloadUserRole]
+		payloadId := ctx.Keys[config.PayloadUserId]
 
-		isAdmin := payloadRole == "admin"
-		isOwner := payloadId == ctx.Query("id")
+		isAdmin := payloadRole == config.AdminRole
+		isOwner := payloadId == ctx.Query(config.QueryId)
 
 		if !isOwner && !isAdmin {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "you do not have permission to access this route"})
+			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
 
@@ -47,30 +42,32 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 
 func Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader(authorizationHeader)
+		authHeader := ctx.GetHeader(config.AuthorizationHeader)
 		if len(authHeader) == 0 {
-			err := errors.New("authorization header not provided")
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			message := util.MakeMessage(util.MessageError, config.ErrNoAuthHeader.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
 		accessToken, err := util.ValidateBearerHeader(authHeader)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
 		token, err := util.ParseAndValidateJWTToken(accessToken)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
-		userId := token.Claims.(jwt.MapClaims)["id"]
-		userRole := token.Claims.(jwt.MapClaims)["role"]
+		userId := token.Claims.(jwt.MapClaims)[config.JWTClaimsId]
+		userRole := token.Claims.(jwt.MapClaims)[config.JWTClaimsRole]
 
-		ctx.Set(payloadUserRole, userRole)
-		ctx.Set(payloadUserId, userId)
+		ctx.Set(config.PayloadUserRole, userRole)
+		ctx.Set(config.PayloadUserId, userId)
 
 		ctx.Next()
 	}
