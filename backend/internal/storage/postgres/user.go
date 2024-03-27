@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"sigma-test/internal/entity"
 	"strings"
@@ -81,26 +82,32 @@ func (s *UsersRepo) GetUserByEmail(email string) (entity.User, error) {
 
 func (s *UsersRepo) UpdateUser(id string, data entity.User) (entity.User, error) {
 	user := entity.User{}
+
 	updates := []string{}
+	args := []interface{}{id}
 
 	if data.Email != "" {
-		updates = append(updates, fmt.Sprintf("email = '%s'", data.Email))
+		updates = append(updates, fmt.Sprintf("email = $%d", len(args)+1))
+		args = append(args, data.Email)
 	}
 	if data.Password != "" {
-		updates = append(updates, fmt.Sprintf("password = '%s'", data.Password))
+		updates = append(updates, fmt.Sprintf("password = $%d", len(args)+1))
+		args = append(args, data.Password)
 	}
 	if data.Role != "" {
-		updates = append(updates, fmt.Sprintf("role = '%s'", data.Role))
+		updates = append(updates, fmt.Sprintf("role = $%d", len(args)+1))
+		args = append(args, data.Role)
 	}
 
-	fmt.Println(data, updates)
+	if len(updates) == 0 {
+		return entity.User{}, errors.New("empty update body")
+	}
 
-	query := fmt.Sprintf("UPDATE users SET %s WHERE id = $1 RETURNING *", strings.Join(updates, ", "))
-	fmt.Println(id)
-	err := s.db.QueryRow(query, id).Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
-
+	query := "UPDATE users SET " + strings.Join(updates, ", ") + " WHERE id = $1 RETURNING *"
+	fmt.Printf("query: %v\n", query)
+	err := s.db.QueryRow(query, args...).Scan(&user.ID, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
 	if err != nil {
-		return entity.User{}, nil
+		return entity.User{}, err
 	}
 
 	return user, nil
