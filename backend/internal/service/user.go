@@ -5,8 +5,6 @@ import (
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
 	"sigma-test/internal/util"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -32,7 +30,7 @@ func (s UserService) Login(body request.User) (string, error) {
 		return "", errors.New("invalid email or password")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
+	if _, err := util.ComparePasswordAndHash(body.Password, user.Password); err != nil {
 		return "", err
 	}
 
@@ -69,13 +67,13 @@ func (s UserService) GetUserByEmail(email string) (response.User, error) {
 }
 
 func (s UserService) CreateUser(data request.User) (response.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 10)
+	hash, err := util.HashPassword(data.Password)
 	if err != nil {
 		return response.User{}, errors.New("failed to hash body")
 	}
 
 	user := data.ToEntity()
-	user.Password = string(hash)
+	user.Password = hash
 
 	new_user, err := s.repo.CreateUser(user)
 	if err != nil {
@@ -86,14 +84,14 @@ func (s UserService) CreateUser(data request.User) (response.User, error) {
 }
 
 func (s UserService) UpdateUser(id string, data request.User) (response.User, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), 10)
+	hash, err := util.HashPassword(data.Password)
 	if err != nil {
 		return response.User{}, errors.New("failed to hash body")
 	}
 
 	updateBody := data.ToEntity()
 	if data.Password != "" {
-		updateBody.Password = string(hash)
+		updateBody.Password = hash
 	}
 
 	updatedUser, err := s.repo.UpdateUser(id, updateBody)
