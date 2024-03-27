@@ -1,8 +1,6 @@
 package app
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"sigma-test/config"
 	"sigma-test/internal/controller"
@@ -13,9 +11,7 @@ import (
 )
 
 func SetupRouter() *gin.Engine {
-	env := config.ConfigEnv()
-	connStr := fmt.Sprintf("user=%s dbname=%s password=%s sslmode=%s", env.DBUser, env.DBName, env.DBPassword, env.DBSSLMode)
-	db, err := sql.Open("postgres", connStr)
+	db, err := postgres.InitDBConnection()
 	if err != nil {
 		log.Fatal(err)
 	}
