@@ -1,18 +1,24 @@
 package app
 
 import (
+	"log"
 	"sigma-test/config"
 	"sigma-test/internal/controller"
 	"sigma-test/internal/service"
-	"sigma-test/internal/storage/inmemory"
+	"sigma-test/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRouter() *gin.Engine {
+	db, err := postgres.InitDBConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Storages initialization
 	storages := service.Storages{
-		UserRepo: inmemory.NewUsersRepo( /* database connection */ ),
+		UserRepo: postgres.NewUsersRepo(db),
 	}
 
 	// Service initialization

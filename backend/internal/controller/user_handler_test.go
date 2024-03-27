@@ -38,7 +38,7 @@ func TestSignup(t *testing.T) {
 		r, usrSvc := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test123", Role: "user"}
-		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser), nil)
+		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser.ToEntity()), nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := signUpRequest(t, string(body))
@@ -283,7 +283,7 @@ func TestCreateUser(t *testing.T) {
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		usrSvc.EXPECT().CreateUser(mockUser).Return(response.User(mockUser), nil)
+		usrSvc.EXPECT().CreateUser(mockUser).Return(mockAdmin.ToResponse(), nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := createUserRequest(t, string(body), mockToken)
@@ -453,7 +453,7 @@ func TestDeleteUser(t *testing.T) {
 		mockOwner := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role)
 
-		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(nil)
+		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(response.User(mockOwner.ToEntity()), nil)
 
 		req := deleteUserRequest(t, mockOwner.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -470,7 +470,7 @@ func TestDeleteUser(t *testing.T) {
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
 
-		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(nil)
+		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(response.User(mockUser.ToEntity()), nil)
 
 		req := deleteUserRequest(t, mockUser.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -501,7 +501,7 @@ func TestDeleteUser(t *testing.T) {
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
 
-		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(errors.New("No such user"))
+		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(response.User{}, errors.New("No such user"))
 
 		req := deleteUserRequest(t, "INVALID_ID", mockToken)
 		res := httptest.NewRecorder()

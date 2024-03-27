@@ -8,11 +8,10 @@ type Storages struct {
 
 // Interface of methods for working with database
 type UserRepo interface {
-	AddUser(user entity.User) (entity.User, error)
-	DeleteUser(idx int) error
-	GetUserByIdx(idx int) (entity.User, error)
-	GetAllUsers() ([]entity.User, error)
-	UpdateUser(user entity.User, idx int) (entity.User, error)
-	GetUserIdxById(id string) (int, bool)
-	GetUserIdxByEmail(email string) (int, bool)
+	CreateUser(user entity.User) (entity.User, error)
+	GetUsers() ([]entity.User, error)
+	GetUser(id string) (entity.User, error)
+	GetUserByEmail(email string) (entity.User, error)
+	UpdateUser(id string, data entity.User) (entity.User, error)
+	DeleteUser(id string) (entity.User, error)
 }
