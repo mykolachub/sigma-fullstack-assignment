@@ -1,8 +1,5 @@
 version: '3'
 
-dotenv:
-- '.env'
-
 tasks:
   server:
     desc: Starts API Server
@@ -30,5 +27,9 @@ tasks:
   db:migrate:
     desc: Starts Database Migrations
     dir: internal/storage/postgres/migrations
+    dotenv:
+    - '.env'
+    vars:
+      DB_CONN_STRING: postgres://$SIGMA_DBUSER:$SIGMA_DBPASSWORD@localhost/$SIGMA_DBNAME?sslmode=$SIGMA_DBSSLMODE
     cmds:
-    - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "$DB_CONN_STRING" up
+    - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "{{.DB_CONN_STRING}}" up
