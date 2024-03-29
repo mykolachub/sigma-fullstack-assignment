@@ -10,6 +10,10 @@ type Services struct {
 	UserService UserService
 }
 
+type Configs struct {
+	UserHandlerConfig UserHandlerConfig
+}
+
 // Interface of methods for working with user service
 //
 //go:generate mockery --name=UserService

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRouter(r *gin.Engine, services Services) *gin.Engine {
+func InitRouter(r *gin.Engine, services Services, configs Configs) *gin.Engine {
 	// CORS config
 	r.Use(cors.New(config.CorsConfig))
 
@@ -19,7 +19,7 @@ func InitRouter(r *gin.Engine, services Services) *gin.Engine {
 		})
 	})
 
-	InitUserHandler(r, services.UserService)
+	InitUserHandler(r, services.UserService, configs.UserHandlerConfig)
 
 	return r
 }

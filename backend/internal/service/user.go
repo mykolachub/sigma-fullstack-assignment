@@ -7,12 +7,17 @@ import (
 	"sigma-test/internal/util"
 )
 
-type UserService struct {
-	repo UserRepo
+type UserConfig struct {
+	JwtSecret string
 }
 
-func NewUserService(r UserRepo) UserService {
-	return UserService{repo: r}
+type UserService struct {
+	repo UserRepo
+	cfg  UserConfig
+}
+
+func NewUserService(r UserRepo, c UserConfig) UserService {
+	return UserService{repo: r, cfg: c}
 }
 
 func (s UserService) SignUp(body request.User) (response.User, error) {
@@ -34,7 +39,7 @@ func (s UserService) Login(body request.User) (string, error) {
 		return "", config.ErrInvalidCredentials
 	}
 
-	return util.GenerateJWTToken(user.ID, user.Role)
+	return util.GenerateJWTToken(user.ID, user.Role, s.cfg.JwtSecret)
 }
 
 func (s UserService) GetAllUsers() ([]response.User, error) {

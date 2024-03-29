@@ -10,17 +10,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserHandler struct {
-	userSvc UserService
+type UserHandlerConfig struct {
+	JwtSecret string
 }
 
-func InitUserHandler(r *gin.Engine, userSvc UserService) {
-	handler := UserHandler{userSvc: userSvc}
+type UserHandler struct {
+	userSvc UserService
+	userCfg UserHandlerConfig
+}
+
+func InitUserHandler(r *gin.Engine, userSvc UserService, userCfg UserHandlerConfig) {
+	handler := UserHandler{userSvc: userSvc, userCfg: userCfg}
 
 	r.POST("/api/user/signup", handler.signup)
 	r.POST("/api/user/login", handler.login)
 
-	r.Use(middleware.Protect())
+	r.Use(middleware.Protect(handler.userCfg.JwtSecret))
 
 	r.GET("/api/user/me", handler.me)
 

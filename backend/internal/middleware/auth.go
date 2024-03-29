@@ -40,7 +40,7 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect() gin.HandlerFunc {
+func Protect(secret string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(config.AuthorizationHeader)
 		if len(authHeader) == 0 {
@@ -56,7 +56,7 @@ func Protect() gin.HandlerFunc {
 			return
 		}
 
-		token, err := util.ParseAndValidateJWTToken(accessToken)
+		token, err := util.ParseAndValidateJWTToken(accessToken, secret)
 		if err != nil {
 			message := util.MakeMessage(util.MessageError, err.Error(), nil)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)

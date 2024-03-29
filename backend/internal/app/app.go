@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"sigma-test/config"
 	"sigma-test/internal/controller"
@@ -10,8 +11,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter() *gin.Engine {
-	db, err := postgres.InitDBConnection()
+func SetupRouter(env *config.Env) *gin.Engine {
+	// Configs initialization
+	config.InitCorsConfig()
+	dbConfig := postgres.DbConfig{
+		DBUser:     env.DBUser,
+		DBName:     env.DBName,
+		DBPassword: env.DBPassword,
+		DBSSLMode:  env.DBSSLMode,
+	}
+	userConfig := service.UserConfig{JwtSecret: env.JWTSecret}
+	userHandlerConfig := controller.UserHandlerConfig{JwtSecret: env.JWTSecret}
+
+	// Database connection
+	db, err := postgres.InitDBConnection(dbConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,24 +36,20 @@ func SetupRouter() *gin.Engine {
 
 	// Service initialization
 	services := controller.Services{
-		UserService: service.NewUserService(storages.UserRepo),
+		UserService: service.NewUserService(storages.UserRepo, userConfig),
 	}
-
-	// CORS config
-	config.InitCorsConfig()
 
 	// Gin router
 	router := gin.Default()
 
 	// Controllers initialization
-	r := controller.InitRouter(router, services)
+	r := controller.InitRouter(router, services, controller.Configs{UserHandlerConfig: userHandlerConfig})
 	return r
 }
 
-func Run() {
-	env := config.ConfigEnv()
-	port := ":" + env.Port
+func Run(env *config.Env) {
+	port := fmt.Sprintf(":%s", env.Port)
 
-	r := SetupRouter()
+	r := SetupRouter(env)
 	r.Run(port)
 }
