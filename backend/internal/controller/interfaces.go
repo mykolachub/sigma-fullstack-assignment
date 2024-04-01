@@ -8,6 +8,7 @@ import (
 // Easely extensible with other services
 type Services struct {
 	UserService UserService
+	PageService PageService
 }
 
 type Configs struct {
@@ -26,4 +27,9 @@ type UserService interface {
 	CreateUser(user request.User) (response.User, error)
 	UpdateUser(id string, user request.User) (response.User, error)
 	DeleteUser(id string) (response.User, error)
+}
+
+type PageService interface {
+	TrackPage(name string) error
+	GetPageCount(name string) (response.Page, error)
 }

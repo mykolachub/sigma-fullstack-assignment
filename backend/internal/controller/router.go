@@ -20,6 +20,7 @@ func InitRouter(r *gin.Engine, services Services, configs Configs) *gin.Engine {
 	})
 
 	InitUserHandler(r, services.UserService, configs.UserHandlerConfig)
+	InitPageHandler(r, services.PageService)
 
 	return r
 }
