@@ -11,9 +11,15 @@ require (
 )
 
 require (
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/aerospike/aerospike-client-go/v7 v7.2.0 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/grpc v1.62.1 // indirect
 )
 
 require (
