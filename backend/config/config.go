@@ -7,13 +7,14 @@ import (
 )
 
 type Env struct {
-	JWTSecret  string
-	Port       string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBSSLMode  string
-	Test       string
+	Port               string `envconfig:"SIGMA_APP_PORT"`
+	JWTSecret          string `envconfig:"JWT_SECRET"`
+	PostgresDBUser     string `envconfig:"POSTGRES_DBUSER"`
+	PostgresDBPassword string `envconfig:"POSTGRES_DBPASSWORD"`
+	PostgresDBName     string `envconfig:"POSTGRES_DBNAME"`
+	PostgresDBSSLMode  string `envconfig:"POSTGRES_DBSSLMODE"`
+	AerospikeHostname  string `envconfig:"AEROSPIKE_HOSTNAME"`
+	AerospikePort      int    `envconfig:"AEROSPIKE_PORT"`
 }
 
 func ConfigEnv() *Env {
