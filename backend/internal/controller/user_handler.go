@@ -22,19 +22,19 @@ type UserHandler struct {
 func InitUserHandler(r *gin.Engine, userSvc UserService, userCfg UserHandlerConfig) {
 	handler := UserHandler{userSvc: userSvc, userCfg: userCfg}
 
+	middle := middleware.InitMiddlewares(middleware.MiddlewareConfig{
+		JwtSecret: handler.userCfg.JwtSecret,
+	})
+
 	r.POST("/api/user/signup", handler.signup)
 	r.POST("/api/user/login", handler.login)
 
-	r.Use(middleware.Protect(handler.userCfg.JwtSecret))
-
-	r.GET("/api/user/me", handler.me)
-
-	r.GET("/api/user", handler.getUserById)
-	r.GET("/api/users", handler.getAllUsers)
-	r.POST("/api/users", middleware.OnlyAdmin(), handler.createUser)
-	r.PATCH("/api/users", middleware.OnlyAdminOrOwner(), handler.updateUser)
-	r.DELETE("/api/users", middleware.OnlyAdminOrOwner(), handler.deleteUser)
-
+	r.GET("/api/user/me", middle.Protect(), handler.me)
+	r.GET("/api/user", middle.Protect(), handler.getUserById)
+	r.GET("/api/users", middle.Protect(), handler.getAllUsers)
+	r.POST("/api/users", middle.Protect(), middle.OnlyAdmin(), handler.createUser)
+	r.PATCH("/api/users", middle.Protect(), middle.OnlyAdminOrOwner(), handler.updateUser)
+	r.DELETE("/api/users", middle.Protect(), middle.OnlyAdminOrOwner(), handler.deleteUser)
 }
 
 func (h UserHandler) me(c *gin.Context) {

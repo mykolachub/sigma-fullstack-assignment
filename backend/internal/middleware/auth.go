@@ -9,7 +9,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func OnlyAdmin() gin.HandlerFunc {
+type MiddlewareConfig struct {
+	JwtSecret string
+}
+
+type Middleware struct {
+	cfg MiddlewareConfig
+}
+
+func InitMiddlewares(cfg MiddlewareConfig) Middleware {
+	return Middleware{cfg: cfg}
+}
+
+func (m Middleware) OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		role := ctx.Keys[config.PayloadUserRole]
 		if role != config.AdminRole {
@@ -22,7 +34,7 @@ func OnlyAdmin() gin.HandlerFunc {
 	}
 }
 
-func OnlyAdminOrOwner() gin.HandlerFunc {
+func (m Middleware) OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payloadRole := ctx.Keys[config.PayloadUserRole]
 		payloadId := ctx.Keys[config.PayloadUserId]
@@ -40,7 +52,7 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect(secret string) gin.HandlerFunc {
+func (m Middleware) Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(config.AuthorizationHeader)
 		if len(authHeader) == 0 {
@@ -56,7 +68,7 @@ func Protect(secret string) gin.HandlerFunc {
 			return
 		}
 
-		token, err := util.ParseAndValidateJWTToken(accessToken, secret)
+		token, err := util.ParseAndValidateJWTToken(accessToken, m.cfg.JwtSecret)
 		if err != nil {
 			message := util.MakeMessage(util.MessageError, err.Error(), nil)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
