@@ -10,6 +10,10 @@ type Services struct {
 	UserService UserService
 }
 
+type Configs struct {
+	UserHandlerConfig UserHandlerConfig
+}
+
 // Interface of methods for working with user service
 //
 //go:generate mockery --name=UserService
@@ -21,5 +25,5 @@ type UserService interface {
 	GetUserByEmail(email string) (response.User, error)
 	CreateUser(user request.User) (response.User, error)
 	UpdateUser(id string, user request.User) (response.User, error)
-	DeleteUser(id string) error
+	DeleteUser(id string) (response.User, error)
 }

@@ -80,21 +80,31 @@ func (_c *UserService_CreateUser_Call) RunAndReturn(run func(request.User) (resp
 }
 
 // DeleteUser provides a mock function with given fields: id
-func (_m *UserService) DeleteUser(id string) error {
+func (_m *UserService) DeleteUser(id string) (response.User, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUser")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
+	var r0 response.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (response.User, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(string) response.User); ok {
 		r0 = rf(id)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(response.User)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // UserService_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
@@ -115,12 +125,12 @@ func (_c *UserService_DeleteUser_Call) Run(run func(id string)) *UserService_Del
 	return _c
 }
 
-func (_c *UserService_DeleteUser_Call) Return(_a0 error) *UserService_DeleteUser_Call {
-	_c.Call.Return(_a0)
+func (_c *UserService_DeleteUser_Call) Return(_a0 response.User, _a1 error) *UserService_DeleteUser_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserService_DeleteUser_Call) RunAndReturn(run func(string) error) *UserService_DeleteUser_Call {
+func (_c *UserService_DeleteUser_Call) RunAndReturn(run func(string) (response.User, error)) *UserService_DeleteUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

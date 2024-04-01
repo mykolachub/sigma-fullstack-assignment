@@ -18,12 +18,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeUserService(t *testing.T) (*gin.Engine, *mocks.UserService) {
+func makeUserService(t *testing.T) (*gin.Engine, *mocks.UserService, UserHandlerConfig) {
 	r := gin.New()
 	userService := mocks.NewUserService(t)
-	InitUserHandler(r, userService)
+	userHandlerConfig := UserHandlerConfig{JwtSecret: "test_secret"}
+	InitUserHandler(r, userService, userHandlerConfig)
 
-	return r, userService
+	return r, userService, userHandlerConfig
 }
 
 func TestSignup(t *testing.T) {
@@ -35,10 +36,10 @@ func TestSignup(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on successful signup", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test123", Role: "user"}
-		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser), nil)
+		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser.ToEntity()), nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := signUpRequest(t, string(body))
@@ -50,7 +51,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("should return 400 on invalid body", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		req := signUpRequest(t, "")
 		res := httptest.NewRecorder()
@@ -61,7 +62,7 @@ func TestSignup(t *testing.T) {
 	})
 
 	t.Run("should return 422 if user exists", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test123", Role: "user"}
 		usrSvc.EXPECT().SignUp(mockUser).Return(response.User{}, errors.New("User already exists"))
@@ -85,7 +86,7 @@ func TestLogin(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on successful login", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		usrSvc.EXPECT().Login(mockUser).Return("token", nil)
@@ -100,7 +101,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("should return 400 on invalid body", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		req := loginRequest(t, "")
 		res := httptest.NewRecorder()
@@ -111,7 +112,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("should return 422 on invalid credantials", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		usrSvc.EXPECT().Login(mockUser).Return("", errors.New("Invalid Credantials"))
@@ -136,10 +137,10 @@ func TestMe(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on success", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
 		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser.ToResponse(), nil)
 
 		req := meRequest(t, mockToken)
@@ -151,9 +152,9 @@ func TestMe(t *testing.T) {
 	})
 
 	t.Run("should return 422 on invalid token", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
-		mockToken, _ := util.GenerateJWTToken("INVALID_ID", "INVALID_ROLE")
+		mockToken, _ := util.GenerateJWTToken("INVALID_ID", "INVALID_ROLE", handCfg.JwtSecret)
 		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, errors.New("Invalid token"))
 
 		req := meRequest(t, mockToken)
@@ -165,7 +166,7 @@ func TestMe(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 		req := meRequest(t, mockToken)
@@ -187,10 +188,10 @@ func TestGetAllUsers(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on success", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
 		usrSvc.EXPECT().GetAllUsers().Return([]response.User{mockUser}, nil)
 
 		req := getAllUsersRequest(t, mockToken)
@@ -202,7 +203,7 @@ func TestGetAllUsers(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 		req := getAllUsersRequest(t, mockToken)
@@ -224,10 +225,10 @@ func TestGetUsersById(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on success", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
 		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser, nil)
 
 		req := getUsersByIdRequest(t, mockUser.ID, mockToken)
@@ -239,10 +240,10 @@ func TestGetUsersById(t *testing.T) {
 	})
 
 	t.Run("should return 422 on invalid id", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
 		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, errors.New("Invalid id"))
 
 		req := getUsersByIdRequest(t, "INVALID_ID", mockToken)
@@ -254,7 +255,7 @@ func TestGetUsersById(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 
@@ -277,13 +278,13 @@ func TestCreateUser(t *testing.T) {
 		return req
 	}
 	t.Run("should return 201 on success", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockAdmin := entity.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		usrSvc.EXPECT().CreateUser(mockUser).Return(response.User(mockUser), nil)
+		usrSvc.EXPECT().CreateUser(mockUser).Return(mockAdmin.ToResponse(), nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := createUserRequest(t, string(body), mockToken)
@@ -295,10 +296,10 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return 403 on non-admin", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, handCfg := makeUserService(t)
 
 		mockNonAdmin := entity.User{ID: "non-admin", Email: "non-admin", Password: "non-admin", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockNonAdmin.ID, mockNonAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockNonAdmin.ID, mockNonAdmin.Role, handCfg.JwtSecret)
 
 		req := createUserRequest(t, "", mockToken)
 		res := httptest.NewRecorder()
@@ -309,10 +310,10 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return 422 on user already exists", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockAdmin := entity.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		usrSvc.EXPECT().CreateUser(mockUser).Return(response.User{}, errors.New("User already exists"))
@@ -327,7 +328,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 
@@ -350,10 +351,10 @@ func TestUpdateUser(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on update by owner", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockOwner := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role)
+		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role, handCfg.JwtSecret)
 
 		updateBody := request.User{Email: "NEW"}
 		updatedUser := response.User{ID: "user", Email: "NEW", Password: "user", Role: "user"}
@@ -369,10 +370,10 @@ func TestUpdateUser(t *testing.T) {
 	})
 
 	t.Run("should return 200 on update by admin", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		mockUser := entity.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		updateBody := request.User{Email: "NEW"}
@@ -389,10 +390,10 @@ func TestUpdateUser(t *testing.T) {
 	})
 
 	t.Run("should return 403 on update by non-owner and non-admin", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, handCfg := makeUserService(t)
 
 		mockUser1 := request.User{ID: "user1", Email: "user1", Password: "user1", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role, handCfg.JwtSecret)
 
 		mockUser2 := entity.User{ID: "user2", Email: "user2", Password: "user2", Role: "user"}
 		updateBody := request.User{Email: "NEW"}
@@ -407,10 +408,10 @@ func TestUpdateUser(t *testing.T) {
 	})
 
 	t.Run("should return 422 on invalid id", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockAdmin := entity.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		updateBody := request.User{Email: "NEW"}
 		usrSvc.EXPECT().UpdateUser("INVALID_ID", updateBody).Return(response.User{}, errors.New("No such user"))
@@ -425,7 +426,7 @@ func TestUpdateUser(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 
@@ -448,12 +449,12 @@ func TestDeleteUser(t *testing.T) {
 		return req
 	}
 	t.Run("should return 200 on delete by owner", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockOwner := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role)
+		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(nil)
+		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(response.User(mockOwner.ToEntity()), nil)
 
 		req := deleteUserRequest(t, mockOwner.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -464,13 +465,13 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("should return 200 on delete by admin", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(nil)
+		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(response.User(mockUser.ToEntity()), nil)
 
 		req := deleteUserRequest(t, mockUser.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -481,11 +482,11 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("should return 403 on delete by non-owner and non-admin", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, handCfg := makeUserService(t)
 
 		mockUser1 := request.User{ID: "user1", Email: "user1", Password: "user1", Role: "user"}
 		mockUser2 := request.User{ID: "user2", Email: "user2", Password: "user2", Role: "user"}
-		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role)
+		mockToken, _ := util.GenerateJWTToken(mockUser1.ID, mockUser1.Role, handCfg.JwtSecret)
 
 		req := deleteUserRequest(t, mockUser2.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -496,12 +497,12 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("should return 422 on invalid id", func(t *testing.T) {
-		r, usrSvc := makeUserService(t)
+		r, usrSvc, handCfg := makeUserService(t)
 
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
-		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role)
+		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(errors.New("No such user"))
+		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(response.User{}, errors.New("No such user"))
 
 		req := deleteUserRequest(t, "INVALID_ID", mockToken)
 		res := httptest.NewRecorder()
@@ -512,7 +513,7 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("should return 401 on missing token", func(t *testing.T) {
-		r, _ := makeUserService(t)
+		r, _, _ := makeUserService(t)
 
 		mockToken := ""
 

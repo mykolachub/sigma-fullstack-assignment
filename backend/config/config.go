@@ -3,24 +3,24 @@ package config
 import (
 	"log"
 
-	"github.com/spf13/viper"
+	"github.com/kelseyhightower/envconfig"
 )
 
-type env struct {
-	JWTSecret string `mapstructure:"JWT_SECRET"`
-	Port      string `mapstructure:"PORT"`
+type Env struct {
+	JWTSecret  string
+	Port       string
+	DBUser     string
+	DBPassword string
+	DBName     string
+	DBSSLMode  string
+	Test       string
 }
 
-func ConfigEnv() *env {
-	env := env{}
-	viper.SetConfigFile(".env")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Can't find the file .env : ", err)
-	}
-
-	if err := viper.Unmarshal(&env); err != nil {
-		log.Fatal("Environment can't be loaded: ", err)
+func ConfigEnv() *Env {
+	var env Env
+	err := envconfig.Process("SIGMA", &env)
+	if err != nil {
+		log.Fatal(err.Error())
 	}
 
 	return &env

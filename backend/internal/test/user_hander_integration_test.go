@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"sigma-test/config"
 	"sigma-test/internal/app"
 	"testing"
 
@@ -13,7 +14,8 @@ import (
 
 func TestPingPongIntegration(t *testing.T) {
 	t.Run("should return ping on pong", func(t *testing.T) {
-		router := app.SetupRouter()
+		env := config.ConfigEnv()
+		router := app.SetupRouter(env)
 		res := httptest.NewRecorder()
 		req, err := http.NewRequest("GET", "/ping", nil)
 		if err != nil {
@@ -29,10 +31,11 @@ func TestPingPongIntegration(t *testing.T) {
 
 func TestSignupIntegration(t *testing.T) {
 	t.Run("should return 200 on successful signup", func(t *testing.T) {
-		router := app.SetupRouter()
+		env := config.ConfigEnv()
+		router := app.SetupRouter(env)
 		res := httptest.NewRecorder()
 
-		requestBody := []byte(`{"email": "test", "password": "test", "role": "user"}`)
+		requestBody := []byte(`{"email": "integration_user", "password": "test", "role": "user"}`)
 		body := bytes.NewReader(requestBody)
 		req, err := http.NewRequest("POST", "/api/user/signup", body)
 		if err != nil {
@@ -45,7 +48,8 @@ func TestSignupIntegration(t *testing.T) {
 	})
 
 	t.Run("should return 400 on invalid body", func(t *testing.T) {
-		router := app.SetupRouter()
+		env := config.ConfigEnv()
+		router := app.SetupRouter(env)
 		res := httptest.NewRecorder()
 
 		req, err := http.NewRequest("POST", "/api/user/signup", nil)
@@ -59,10 +63,11 @@ func TestSignupIntegration(t *testing.T) {
 	})
 
 	t.Run("should return 422 if user exists", func(t *testing.T) {
-		router := app.SetupRouter()
+		env := config.ConfigEnv()
+		router := app.SetupRouter(env)
 		res := httptest.NewRecorder()
 
-		jsonBody := []byte(`{"email": "user", "password": "test123", "role": "user"}`)
+		jsonBody := []byte(`{"email": "integration_user", "password": "test", "role": "user"}`)
 		bodyReader := bytes.NewReader(jsonBody)
 		req, err := http.NewRequest("POST", "/api/user/signup", bodyReader)
 		if err != nil {
