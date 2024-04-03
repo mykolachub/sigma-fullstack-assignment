@@ -42,8 +42,8 @@ func (s UserService) Login(body request.User) (string, error) {
 	return util.GenerateJWTToken(user.ID, user.Role, s.cfg.JwtSecret)
 }
 
-func (s UserService) GetAllUsers() ([]response.User, error) {
-	users, err := s.repo.GetUsers()
+func (s UserService) GetAllUsers(page int, search string) ([]response.User, error) {
+	users, err := s.repo.GetUsers(page, search)
 	if err != nil {
 		return []response.User{}, config.ErrFailedGetUser
 	}

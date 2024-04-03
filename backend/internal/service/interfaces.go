@@ -1,6 +1,8 @@
 package service
 
-import "sigma-test/internal/entity"
+import (
+	"sigma-test/internal/entity"
+)
 
 type Storages struct {
 	UserRepo UserRepo
@@ -10,7 +12,7 @@ type Storages struct {
 // Interface of methods for working with database
 type UserRepo interface {
 	CreateUser(user entity.User) (entity.User, error)
-	GetUsers() ([]entity.User, error)
+	GetUsers(page int, search string) ([]entity.User, error)
 	GetUser(id string) (entity.User, error)
 	GetUserByEmail(email string) (entity.User, error)
 	UpdateUser(id string, data entity.User) (entity.User, error)

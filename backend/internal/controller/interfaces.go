@@ -21,7 +21,7 @@ type Configs struct {
 type UserService interface {
 	SignUp(body request.User) (response.User, error)
 	Login(body request.User) (string, error)
-	GetAllUsers() ([]response.User, error)
+	GetAllUsers(page int, search string) ([]response.User, error)
 	GetUserById(id string) (response.User, error)
 	GetUserByEmail(email string) (response.User, error)
 	CreateUser(user request.User) (response.User, error)

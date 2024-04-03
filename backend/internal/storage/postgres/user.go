@@ -35,9 +35,11 @@ func (s *UsersRepo) CreateUser(data entity.User) (entity.User, error) {
 	return user, nil
 }
 
-func (s *UsersRepo) GetUsers() ([]entity.User, error) {
-	query := "SELECT * FROM users"
-	rows, err := s.db.Query(query)
+func (s *UsersRepo) GetUsers(page int, search string) ([]entity.User, error) {
+	limit := 5
+	offset := (page - 1) * limit
+	query := "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%' OFFSET $2 LIMIT $3"
+	rows, err := s.db.Query(query, search, offset, limit)
 	if err != nil {
 		return nil, err
 	}

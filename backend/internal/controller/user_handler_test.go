@@ -129,7 +129,7 @@ func TestLogin(t *testing.T) {
 
 func TestMe(t *testing.T) {
 	meRequest := func(t *testing.T, token string) *http.Request {
-		req, err := http.NewRequest("GET", "/api/user/me", nil)
+		req, err := http.NewRequest("GET", "/api/users/me", nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -192,7 +192,8 @@ func TestGetAllUsers(t *testing.T) {
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
-		usrSvc.EXPECT().GetAllUsers().Return([]response.User{mockUser}, nil)
+		page, search := 1, ""
+		usrSvc.EXPECT().GetAllUsers(page, search).Return([]response.User{mockUser}, nil)
 
 		req := getAllUsersRequest(t, mockToken)
 		res := httptest.NewRecorder()
@@ -217,7 +218,7 @@ func TestGetAllUsers(t *testing.T) {
 
 func TestGetUsersById(t *testing.T) {
 	getUsersByIdRequest := func(t *testing.T, id, token string) *http.Request {
-		req, err := http.NewRequest("GET", "/api/user?id="+id, nil)
+		req, err := http.NewRequest("GET", "/api/users/"+id, nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -259,7 +260,7 @@ func TestGetUsersById(t *testing.T) {
 
 		mockToken := ""
 
-		req := getUsersByIdRequest(t, "", mockToken)
+		req := getUsersByIdRequest(t, "some_id", mockToken)
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
@@ -343,7 +344,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	updateUserRequest := func(t *testing.T, id, body, token string) *http.Request {
-		req, err := http.NewRequest("PATCH", "/api/users?id="+id, bytes.NewBufferString(body))
+		req, err := http.NewRequest("PATCH", "/api/users/"+id, bytes.NewBufferString(body))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -441,7 +442,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	deleteUserRequest := func(t *testing.T, id, token string) *http.Request {
-		req, err := http.NewRequest("DELETE", "/api/users?id="+id, nil)
+		req, err := http.NewRequest("DELETE", "/api/users/"+id, nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -460,6 +461,7 @@ func TestDeleteUser(t *testing.T) {
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
+		t.Log(res.Body.String())
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
