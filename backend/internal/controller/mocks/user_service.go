@@ -135,9 +135,9 @@ func (_c *UserService_DeleteUser_Call) RunAndReturn(run func(string) (response.U
 	return _c
 }
 
-// GetAllUsers provides a mock function with given fields:
-func (_m *UserService) GetAllUsers() ([]response.User, error) {
-	ret := _m.Called()
+// GetAllUsers provides a mock function with given fields: page, search
+func (_m *UserService) GetAllUsers(page int, search string) ([]response.User, error) {
+	ret := _m.Called(page, search)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllUsers")
@@ -145,19 +145,19 @@ func (_m *UserService) GetAllUsers() ([]response.User, error) {
 
 	var r0 []response.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]response.User, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(int, string) ([]response.User, error)); ok {
+		return rf(page, search)
 	}
-	if rf, ok := ret.Get(0).(func() []response.User); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(int, string) []response.User); ok {
+		r0 = rf(page, search)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]response.User)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(int, string) error); ok {
+		r1 = rf(page, search)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -171,13 +171,15 @@ type UserService_GetAllUsers_Call struct {
 }
 
 // GetAllUsers is a helper method to define mock.On call
-func (_e *UserService_Expecter) GetAllUsers() *UserService_GetAllUsers_Call {
-	return &UserService_GetAllUsers_Call{Call: _e.mock.On("GetAllUsers")}
+//   - page int
+//   - search string
+func (_e *UserService_Expecter) GetAllUsers(page interface{}, search interface{}) *UserService_GetAllUsers_Call {
+	return &UserService_GetAllUsers_Call{Call: _e.mock.On("GetAllUsers", page, search)}
 }
 
-func (_c *UserService_GetAllUsers_Call) Run(run func()) *UserService_GetAllUsers_Call {
+func (_c *UserService_GetAllUsers_Call) Run(run func(page int, search string)) *UserService_GetAllUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(int), args[1].(string))
 	})
 	return _c
 }
@@ -187,7 +189,7 @@ func (_c *UserService_GetAllUsers_Call) Return(_a0 []response.User, _a1 error) *
 	return _c
 }
 
-func (_c *UserService_GetAllUsers_Call) RunAndReturn(run func() ([]response.User, error)) *UserService_GetAllUsers_Call {
+func (_c *UserService_GetAllUsers_Call) RunAndReturn(run func(int, string) ([]response.User, error)) *UserService_GetAllUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }
