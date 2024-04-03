@@ -6,6 +6,7 @@ import (
 	"sigma-test/internal/middleware"
 	"sigma-test/internal/request"
 	"sigma-test/internal/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,12 +30,15 @@ func InitUserHandler(r *gin.Engine, userSvc UserService, userCfg UserHandlerConf
 	r.POST("/api/user/signup", handler.signup)
 	r.POST("/api/user/login", handler.login)
 
-	r.GET("/api/user/me", middle.Protect(), handler.me)
-	r.GET("/api/user", middle.Protect(), handler.getUserById)
-	r.GET("/api/users", middle.Protect(), handler.getAllUsers)
-	r.POST("/api/users", middle.Protect(), middle.OnlyAdmin(), handler.createUser)
-	r.PATCH("/api/users", middle.Protect(), middle.OnlyAdminOrOwner(), handler.updateUser)
-	r.DELETE("/api/users", middle.Protect(), middle.OnlyAdminOrOwner(), handler.deleteUser)
+	users := r.Group("/api/users", middle.Protect())
+	{
+		users.GET("/me", handler.me)
+		users.GET("/:user_id", handler.getUserById)
+		users.GET("", handler.getAllUsers)
+		users.POST("", middle.OnlyAdmin(), handler.createUser)
+		users.PATCH("/:user_id", middle.OnlyAdminOrOwner(), handler.updateUser)
+		users.DELETE("/:user_id", middle.OnlyAdminOrOwner(), handler.deleteUser)
+	}
 }
 
 func (h UserHandler) me(c *gin.Context) {
@@ -84,7 +88,13 @@ func (h UserHandler) login(c *gin.Context) {
 }
 
 func (h UserHandler) getAllUsers(c *gin.Context) {
-	users, err := h.userSvc.GetAllUsers()
+	search := c.Query(config.SearchParam)
+	page, err := strconv.Atoi(c.Query(config.PageParam))
+	if page < 0 || err != nil {
+		page = 1
+	}
+
+	users, err := h.userSvc.GetAllUsers(page, search)
 	if err != nil {
 		message := util.MakeMessage(util.MessageError, err.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
@@ -94,7 +104,7 @@ func (h UserHandler) getAllUsers(c *gin.Context) {
 }
 
 func (h UserHandler) getUserById(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
 		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
@@ -128,7 +138,7 @@ func (h UserHandler) createUser(c *gin.Context) {
 }
 
 func (h UserHandler) updateUser(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
 		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)
@@ -152,7 +162,7 @@ func (h UserHandler) updateUser(c *gin.Context) {
 }
 
 func (h UserHandler) deleteUser(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
 		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
 		c.JSON(http.StatusUnprocessableEntity, message)

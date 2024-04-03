@@ -40,7 +40,7 @@ func (m Middleware) OnlyAdminOrOwner() gin.HandlerFunc {
 		payloadId := ctx.Keys[config.PayloadUserId]
 
 		isAdmin := payloadRole == config.AdminRole
-		isOwner := payloadId == ctx.Query(config.QueryId)
+		isOwner := payloadId == ctx.Param(config.UserId)
 
 		if !isOwner && !isAdmin {
 			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)

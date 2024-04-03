@@ -19,6 +19,7 @@ var (
 	ErrFailedReadBody     = errors.New("failed to read body")
 	ErrMissingIdPar       = errors.New("missing id parameter")
 	ErrMissingPagePar     = errors.New("missing page parameter")
+	ErrPageParNotInt      = errors.New("page parameter must be number")
 
 	// Security errors
 	ErrFailedHashPassword = errors.New("failed to hash password")
@@ -46,8 +47,11 @@ const (
 	PayloadUserRole = "payload_user_role"
 
 	// Request
-	QueryId = "id"
-	Page    = "page"
+	QueryId     = "id"
+	SearchParam = "search"
+	PageParam   = "page"
+	UserId      = "user_id"
+	Page        = "page"
 
 	// Roles
 	AdminRole = "admin"
