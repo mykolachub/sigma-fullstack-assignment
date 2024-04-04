@@ -91,7 +91,7 @@ func (h UserHandler) getAllUsers(c *gin.Context) {
 	search := c.Query(config.SearchParam)
 	page, err := strconv.Atoi(c.Query(config.PageParam))
 	if page < 0 || err != nil {
-		page = 1
+		page = 0
 	}
 
 	users, err := h.userSvc.GetAllUsers(page, search)

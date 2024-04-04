@@ -36,10 +36,21 @@ func (s *UsersRepo) CreateUser(data entity.User) (entity.User, error) {
 }
 
 func (s *UsersRepo) GetUsers(page int, search string) ([]entity.User, error) {
-	limit := 5
-	offset := (page - 1) * limit
-	query := "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%' OFFSET $2 LIMIT $3"
-	rows, err := s.db.Query(query, search, offset, limit)
+	var query string
+	var rows *sql.Rows
+	var err error
+
+	switch {
+	case page <= 0: // Page number is not valid, return
+		query = "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%'"
+		rows, err = s.db.Query(query, search)
+	default:
+		limit := 5
+		offset := (page - 1) * limit
+		query = "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%' OFFSET $2 LIMIT $3"
+		rows, err = s.db.Query(query, search, offset, limit)
+	}
+
 	if err != nil {
 		return nil, err
 	}

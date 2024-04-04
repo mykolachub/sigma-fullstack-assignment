@@ -40,7 +40,7 @@ const useAuthStore = create<UserAuthState>((set) => ({
   login: async (data: UserLoginDTO): Promise<UserTokenDTO> => {
     try {
       const response = await axios.post(API_URL + '/user/login', data);
-      const { token } = response.data;
+      const token = response.data.data;
       localStorage.setItem('access_token', token);
       // TODO: get refresh token, set to localStorage
       return { token } as UserTokenDTO;
@@ -69,7 +69,7 @@ const useAuthStore = create<UserAuthState>((set) => ({
   me: async (): Promise<UserDTO> => {
     try {
       const token = `Bearer ${useAuthStore.getState().token}`;
-      const response = await axios.get(API_URL + '/user/me', {
+      const response = await axios.get(API_URL + '/users/me', {
         headers: { Authorization: token },
       });
       return response.data.data as UserDTO;

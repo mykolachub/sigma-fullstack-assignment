@@ -1,3 +1,20 @@
 .main__create {
     text-decoration: none;
 }
+
+.home_form {
+  display: grid;
+  grid-template-columns: 85% 15%;
+  gap: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.form__search_input {
+  width: 100%;
+}
+
+.form__search_button {
+  width: 100%;
+  text-align: center;
+}

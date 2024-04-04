@@ -10,7 +10,7 @@ const API_URL = config.env.apiUrl;
 
 interface UserStoreState {
   users: UserDTO[];
-  getAllUsers: () => Promise<UserDTO[]>;
+  getAllUsers: (search?: string) => Promise<UserDTO[]>;
   getUserById: (id: string) => Promise<UserDTO>;
   createUser: (data: UserCreateDTO) => Promise<UserDTO>;
   updateUser: (id: string, data: UserCreateDTO) => Promise<UserDTO>;
@@ -19,12 +19,15 @@ interface UserStoreState {
 
 const useUserStore = create<UserStoreState>(() => ({
   users: [],
-  getAllUsers: async (): Promise<UserDTO[]> => {
+  getAllUsers: async (search: string = ''): Promise<UserDTO[]> => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await axios.get(API_URL + '/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(
+        API_URL + '/users' + `?search=${search}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       return response.data.data as UserDTO[];
     } catch (error) {
       throw new Error(handleAxiosError(error));
@@ -33,7 +36,7 @@ const useUserStore = create<UserStoreState>(() => ({
   getUserById: async (id: string): Promise<UserDTO> => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await axios.get(API_URL + `/user?id=${id}`, {
+      const response = await axios.get(API_URL + `/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.data as UserDTO;
@@ -55,7 +58,7 @@ const useUserStore = create<UserStoreState>(() => ({
   updateUser: async (id: string, data: UserCreateDTO): Promise<UserDTO> => {
     try {
       const token = useAuthStore.getState().token;
-      const response = await axios.patch(API_URL + `/users?id=${id}`, data, {
+      const response = await axios.patch(API_URL + `/users/${id}`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data.data as UserDTO;
@@ -67,7 +70,7 @@ const useUserStore = create<UserStoreState>(() => ({
     try {
       // TODO: if users deletes himself, force logout
       const token = useAuthStore.getState().token;
-      const response = await axios.delete(API_URL + `/users?id=${id}`, {
+      const response = await axios.delete(API_URL + `/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response;
