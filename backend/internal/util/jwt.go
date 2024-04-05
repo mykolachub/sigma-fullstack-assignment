@@ -17,14 +17,14 @@ func GenerateJWTToken(id, role, secret string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-func ParseAndValidateJWTToken(accessToken, secret string) (*jwt.Token, error) {
+func ParseAndValidateJWTToken(accessToken, secret string) (*jwt.Token, config.ServiceCode, error) {
 	token, err := jwt.Parse(accessToken, func(t *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 
 	if err != nil || !token.Valid {
-		return nil, config.ErrInvalidToken
+		return nil, config.SvcInvalidToken, config.SvcInvalidToken.ToError()
 	}
 
-	return token, nil
+	return token, config.SvcEmptyMsg, nil
 }

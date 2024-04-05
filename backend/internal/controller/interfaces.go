@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"sigma-test/config"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
 )
@@ -19,17 +20,17 @@ type Configs struct {
 //
 //go:generate mockery --name=UserService
 type UserService interface {
-	SignUp(body request.User) (response.User, error)
-	Login(body request.User) (string, error)
-	GetAllUsers(page int, search string) ([]response.User, error)
-	GetUserById(id string) (response.User, error)
-	GetUserByEmail(email string) (response.User, error)
-	CreateUser(user request.User) (response.User, error)
-	UpdateUser(id string, user request.User) (response.User, error)
-	DeleteUser(id string) (response.User, error)
+	SignUp(body request.User) (response.User, config.ServiceCode, error)
+	Login(body request.User) (string, config.ServiceCode, error)
+	GetAllUsers(page int, search string) ([]response.User, config.ServiceCode, error)
+	GetUserById(id string) (response.User, config.ServiceCode, error)
+	GetUserByEmail(email string) (response.User, config.ServiceCode, error)
+	CreateUser(user request.User) (response.User, config.ServiceCode, error)
+	UpdateUser(id string, user request.User) (response.User, config.ServiceCode, error)
+	DeleteUser(id string) (response.User, config.ServiceCode, error)
 }
 
 type PageService interface {
-	TrackPage(name string) error
-	GetPageCount(name string) (response.Page, error)
+	TrackPage(name string) (config.ServiceCode, error)
+	GetPageCount(name string) (response.Page, config.ServiceCode, error)
 }

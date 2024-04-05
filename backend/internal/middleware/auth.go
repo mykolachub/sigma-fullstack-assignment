@@ -25,7 +25,8 @@ func (m Middleware) OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		role := ctx.Keys[config.PayloadUserRole]
 		if role != config.AdminRole {
-			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			svcCode := config.SvcNoPermissions
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
@@ -43,7 +44,9 @@ func (m Middleware) OnlyAdminOrOwner() gin.HandlerFunc {
 		isOwner := payloadId == ctx.Param(config.UserId)
 
 		if !isOwner && !isAdmin {
-			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			svcCode := config.SvcNoPermissions
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
@@ -56,21 +59,22 @@ func (m Middleware) Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(config.AuthorizationHeader)
 		if len(authHeader) == 0 {
-			message := util.MakeMessage(util.MessageError, config.ErrNoAuthHeader.Error(), nil)
+			svcCode := config.SvcNoAuthHeader
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
-		accessToken, err := util.ValidateBearerHeader(authHeader)
+		accessToken, svcCode, err := util.ValidateBearerHeader(authHeader)
 		if err != nil {
-			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
-		token, err := util.ParseAndValidateJWTToken(accessToken, m.cfg.JwtSecret)
+		token, svcCode, err := util.ParseAndValidateJWTToken(accessToken, m.cfg.JwtSecret)
 		if err != nil {
-			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}

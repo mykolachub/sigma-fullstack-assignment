@@ -24,36 +24,36 @@ func InitPageHandler(r *gin.Engine, pageSvc PageService, cb *gobreaker.CircuitBr
 func (h PageHandler) TrackPage(c *gin.Context) {
 	pageName := c.Query(config.Page)
 	if pageName == "" {
-		message := util.MakeMessage(util.MessageError, config.ErrMissingPagePar.Error(), nil)
-		c.JSON(http.StatusUnprocessableEntity, message)
+		svcCode := config.SvcMissingPagePar
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	_, err := h.cb.Execute(func() (interface{}, error) {
-		return nil, h.pageSvc.TrackPage(pageName)
+	svcCode, err := h.cb.Execute(func() (interface{}, error) {
+		return h.pageSvc.TrackPage(pageName)
 	})
 
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, config.ErrServiceBusy.Error(), nil)
+		message := util.NewErrResponse(svcCode.(config.ServiceCode).Message, svcCode.(config.ServiceCode).Code)
 		c.JSON(http.StatusServiceUnavailable, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgPageCountet, nil))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.(config.ServiceCode).Message, svcCode.(config.ServiceCode).Code))
 }
 
 func (h PageHandler) GetPageCount(c *gin.Context) {
 	pageName := c.Query(config.Page)
 	if pageName == "" {
-		message := util.MakeMessage(util.MessageError, config.ErrMissingPagePar.Error(), nil)
-		c.JSON(http.StatusUnprocessableEntity, message)
+		svcCode := config.SvcMissingPagePar
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	page, err := h.pageSvc.GetPageCount(pageName)
+	page, svcCode, err := h.pageSvc.GetPageCount(pageName)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, config.ErrFailedGetPage.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, page))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey(pageName, page))
 }

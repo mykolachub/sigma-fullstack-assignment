@@ -20,32 +20,38 @@ func NewUserService(r UserRepo, c UserConfig) UserService {
 	return UserService{repo: r, cfg: c}
 }
 
-func (s UserService) SignUp(body request.User) (response.User, error) {
-	_, err := s.GetUserByEmail(body.Email)
+func (s UserService) SignUp(body request.User) (response.User, config.ServiceCode, error) {
+	_, _, err := s.GetUserByEmail(body.Email)
 	if err == nil {
-		return response.User{}, config.ErrUserExists
+		return response.User{}, config.SvcUserExists, config.SvcUserExists.ToError()
+
 	}
 
 	return s.CreateUser(request.User{Email: body.Email, Password: body.Password, Role: body.Role})
 }
 
-func (s UserService) Login(body request.User) (string, error) {
-	user, err := s.GetUserByEmail(body.Email)
+func (s UserService) Login(body request.User) (string, config.ServiceCode, error) {
+	user, _, err := s.GetUserByEmail(body.Email)
 	if err != nil {
-		return "", config.ErrInvalidCredentials
+		return "", config.SvcInvalidCredentials, config.SvcInvalidCredentials.ToError()
 	}
 
 	if _, err := util.ComparePasswordAndHash(body.Password, user.Password); err != nil {
-		return "", config.ErrInvalidCredentials
+		return "", config.SvcInvalidCredentials, config.SvcInvalidCredentials.ToError()
 	}
 
-	return util.GenerateJWTToken(user.ID, user.Role, s.cfg.JwtSecret)
+	token, err := util.GenerateJWTToken(user.ID, user.Role, s.cfg.JwtSecret)
+	if err != nil {
+		return "", config.SvcFailedCreateToken, config.SvcFailedCreateToken.ToError()
+	}
+
+	return token, config.SvcEmptyMsg, nil
 }
 
-func (s UserService) GetAllUsers(page int, search string) ([]response.User, error) {
+func (s UserService) GetAllUsers(page int, search string) ([]response.User, config.ServiceCode, error) {
 	users, err := s.repo.GetUsers(page, search)
 	if err != nil {
-		return []response.User{}, config.ErrFailedGetUser
+		return []response.User{}, config.SvcFailedGetUser, config.SvcFailedGetUser.ToError()
 	}
 
 	responses := make([]response.User, len(users))
@@ -53,31 +59,31 @@ func (s UserService) GetAllUsers(page int, search string) ([]response.User, erro
 		responses[i] = v.ToResponse()
 	}
 
-	return responses, nil
+	return responses, config.SvcEmptyMsg, nil
 }
 
-func (s UserService) GetUserById(id string) (response.User, error) {
+func (s UserService) GetUserById(id string) (response.User, config.ServiceCode, error) {
 	user, err := s.repo.GetUser(id)
 	if err != nil {
-		return response.User{}, config.ErrNoUser
+		return response.User{}, config.SvcNoUser, config.SvcNoUser.ToError()
 	}
 
-	return user.ToResponse(), nil
+	return user.ToResponse(), config.SvcEmptyMsg, nil
 }
 
-func (s UserService) GetUserByEmail(email string) (response.User, error) {
+func (s UserService) GetUserByEmail(email string) (response.User, config.ServiceCode, error) {
 	user, err := s.repo.GetUserByEmail(email)
 	if err != nil {
-		return response.User{}, config.ErrNoUser
+		return response.User{}, config.SvcNoUser, config.SvcNoUser.ToError()
 	}
 
-	return user.ToResponse(), nil
+	return user.ToResponse(), config.SvcEmptyMsg, nil
 }
 
-func (s UserService) CreateUser(data request.User) (response.User, error) {
+func (s UserService) CreateUser(data request.User) (response.User, config.ServiceCode, error) {
 	hash, err := util.HashPassword(data.Password)
 	if err != nil {
-		return response.User{}, config.ErrFailedHashPassword
+		return response.User{}, config.SvcFailedHashPassword, config.SvcFailedHashPassword.ToError()
 	}
 
 	user := data.ToEntity()
@@ -85,16 +91,16 @@ func (s UserService) CreateUser(data request.User) (response.User, error) {
 
 	new_user, err := s.repo.CreateUser(user)
 	if err != nil {
-		return response.User{}, config.ErrFailedCreateUser
+		return response.User{}, config.SvcFailedCreateUser, config.SvcFailedCreateUser.ToError()
 	}
 
-	return new_user.ToResponse(), nil
+	return new_user.ToResponse(), config.SvcUserCreated, nil
 }
 
-func (s UserService) UpdateUser(id string, data request.User) (response.User, error) {
+func (s UserService) UpdateUser(id string, data request.User) (response.User, config.ServiceCode, error) {
 	hash, err := util.HashPassword(data.Password)
 	if err != nil {
-		return response.User{}, config.ErrFailedHashPassword
+		return response.User{}, config.SvcFailedHashPassword, config.SvcFailedHashPassword.ToError()
 	}
 
 	updateBody := data.ToEntity()
@@ -104,17 +110,17 @@ func (s UserService) UpdateUser(id string, data request.User) (response.User, er
 
 	updatedUser, err := s.repo.UpdateUser(id, updateBody)
 	if err != nil {
-		return response.User{}, config.ErrFailedUpdateUser
+		return response.User{}, config.SvcFailedUpdateUser, config.SvcFailedUpdateUser.ToError()
 	}
 
-	return updatedUser.ToResponse(), nil
+	return updatedUser.ToResponse(), config.SvcUserUpdated, nil
 }
 
-func (s UserService) DeleteUser(id string) (response.User, error) {
+func (s UserService) DeleteUser(id string) (response.User, config.ServiceCode, error) {
 	user, err := s.repo.DeleteUser(id)
 	if err != nil {
-		return response.User{}, config.ErrFailedDeleteUser
+		return response.User{}, config.SvcFailedDeleteUser, config.SvcFailedDeleteUser.ToError()
 	}
 
-	return user.ToResponse(), nil
+	return user.ToResponse(), config.SvcUserDeleted, nil
 }
