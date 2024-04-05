@@ -31,6 +31,8 @@ var (
 	ErrInvalidAuthType  = errors.New("unsupported authorization type")
 	ErrInvalidToken     = errors.New("invalid token")
 	ErrFailedParseToken = errors.New("failed to parse token")
+
+	ErrServiceBusy = errors.New("service is busy, try again later")
 )
 
 const (
