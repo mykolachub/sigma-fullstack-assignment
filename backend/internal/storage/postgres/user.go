@@ -35,9 +35,22 @@ func (s *UsersRepo) CreateUser(data entity.User) (entity.User, error) {
 	return user, nil
 }
 
-func (s *UsersRepo) GetUsers() ([]entity.User, error) {
-	query := "SELECT * FROM users"
-	rows, err := s.db.Query(query)
+func (s *UsersRepo) GetUsers(page int, search string) ([]entity.User, error) {
+	var query string
+	var rows *sql.Rows
+	var err error
+
+	switch {
+	case page <= 0: // Page number is not valid, return
+		query = "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%'"
+		rows, err = s.db.Query(query, search)
+	default:
+		limit := 5
+		offset := (page - 1) * limit
+		query = "SELECT * FROM users WHERE email ILIKE '%' || $1 || '%' OFFSET $2 LIMIT $3"
+		rows, err = s.db.Query(query, search, offset, limit)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +113,7 @@ func (s *UsersRepo) UpdateUser(id string, data entity.User) (entity.User, error)
 	}
 
 	if len(updates) == 0 {
-		return entity.User{}, config.ErrEmptyUpdateBody
+		return entity.User{}, config.SvcEmptyUpdateBody.ToError()
 	}
 
 	query := "UPDATE users SET " + strings.Join(updates, ", ") + " WHERE id = $1 RETURNING *"

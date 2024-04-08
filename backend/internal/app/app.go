@@ -6,6 +6,7 @@ import (
 	"sigma-test/config"
 	"sigma-test/internal/controller"
 	"sigma-test/internal/service"
+	"sigma-test/internal/storage/aerospike"
 	"sigma-test/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
@@ -14,29 +15,42 @@ import (
 func SetupRouter(env *config.Env) *gin.Engine {
 	// Configs initialization
 	config.InitCorsConfig()
-	dbConfig := postgres.DbConfig{
-		DBUser:     env.DBUser,
-		DBName:     env.DBName,
-		DBPassword: env.DBPassword,
-		DBSSLMode:  env.DBSSLMode,
+	postgresConfig := postgres.PostgresConfig{
+		DBUser:     env.PostgresDBUser,
+		DBName:     env.PostgresDBName,
+		DBPassword: env.PostgresDBPassword,
+		DBSSLMode:  env.PostgresDBSSLMode,
+	}
+	aerospikeConfig := aerospike.AerospikeConfig{
+		Hostname: env.AerospikeHostname,
+		Port:     env.AerospikePort,
 	}
 	userConfig := service.UserConfig{JwtSecret: env.JWTSecret}
 	userHandlerConfig := controller.UserHandlerConfig{JwtSecret: env.JWTSecret}
 
 	// Database connection
-	db, err := postgres.InitDBConnection(dbConfig)
+	postgresDb, err := postgres.InitDBConnection(postgresConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	aerospikeClient, err := aerospike.InitDBConnection(aerospikeConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Storages initialization
 	storages := service.Storages{
-		UserRepo: postgres.NewUsersRepo(db),
+		UserRepo: postgres.NewUsersRepo(postgresDb),
+		PageRepo: aerospike.NewPageRepo(aerospikeClient, aerospike.AerospikePageConfig{
+			Namespace: "test",
+			Set:       "pages",
+		}),
 	}
 
 	// Service initialization
 	services := controller.Services{
 		UserService: service.NewUserService(storages.UserRepo, userConfig),
+		PageService: service.NewPageService(storages.PageRepo),
 	}
 
 	// Gin router

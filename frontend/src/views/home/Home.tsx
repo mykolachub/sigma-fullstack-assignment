@@ -5,6 +5,14 @@ import useUserStore from '../../stores/user';
 import AppButton from '../../components/buttons/AppButton';
 import useAuthStore from '../../stores/auth';
 import useToastStore from '../../stores/toast';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import AppInput from '../../components/inputs/AppInput';
+
+import './Home.css';
+
+interface Inputs {
+  search: string;
+}
 
 const Home = () => {
   const { user } = useAuthStore();
@@ -13,19 +21,26 @@ const Home = () => {
 
   const { addToastError } = useToastStore();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const users = await getAllUsers();
-        useUserStore.setState({ users });
-      } catch (error) {
-        if (error instanceof Error) {
-          addToastError(error.message);
-        }
+  const { register, handleSubmit } = useForm<Inputs>();
+
+  const search = async (search: string = '') => {
+    try {
+      const { users } = await getAllUsers(search);
+      useUserStore.setState({ users });
+    } catch (error) {
+      if (error instanceof Error) {
+        addToastError(error.message);
       }
-    };
-    fetchUsers();
+    }
+  };
+
+  useEffect(() => {
+    search();
   }, []);
+
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    search(data.search);
+  };
 
   const handleCreateUser = () => {
     if (!isAdmin) addToastError('you do not have permissions');
@@ -45,6 +60,21 @@ const Home = () => {
             <AppButton onClick={handleCreateUser}>Create User</AppButton>
           </Link>
         </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="home_form">
+          <AppInput
+            {...register('search')}
+            type="text"
+            placeholder="Search for users"
+            className="form__search_input"
+          />
+          <AppButton
+            onSubmit={handleSubmit(onSubmit)}
+            className="form__search_button"
+          >
+            Search
+          </AppButton>
+        </form>
 
         {users.map(({ id, email, role }) => (
           <User key={id} id={id} email={email} role={role} />

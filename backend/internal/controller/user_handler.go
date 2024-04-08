@@ -6,6 +6,7 @@ import (
 	"sigma-test/internal/middleware"
 	"sigma-test/internal/request"
 	"sigma-test/internal/util"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,148 +23,160 @@ type UserHandler struct {
 func InitUserHandler(r *gin.Engine, userSvc UserService, userCfg UserHandlerConfig) {
 	handler := UserHandler{userSvc: userSvc, userCfg: userCfg}
 
+	middle := middleware.InitMiddlewares(middleware.MiddlewareConfig{
+		JwtSecret: handler.userCfg.JwtSecret,
+	})
+
 	r.POST("/api/user/signup", handler.signup)
 	r.POST("/api/user/login", handler.login)
 
-	r.Use(middleware.Protect(handler.userCfg.JwtSecret))
-
-	r.GET("/api/user/me", handler.me)
-
-	r.GET("/api/user", handler.getUserById)
-	r.GET("/api/users", handler.getAllUsers)
-	r.POST("/api/users", middleware.OnlyAdmin(), handler.createUser)
-	r.PATCH("/api/users", middleware.OnlyAdminOrOwner(), handler.updateUser)
-	r.DELETE("/api/users", middleware.OnlyAdminOrOwner(), handler.deleteUser)
-
+	users := r.Group("/api/users", middle.Protect())
+	{
+		users.GET("/me", handler.me)
+		users.GET("/:user_id", handler.getUserById)
+		users.GET("", handler.getAllUsers)
+		users.POST("", middle.OnlyAdmin(), handler.createUser)
+		users.PATCH("/:user_id", middle.OnlyAdminOrOwner(), handler.updateUser)
+		users.DELETE("/:user_id", middle.OnlyAdminOrOwner(), handler.deleteUser)
+	}
 }
 
 func (h UserHandler) me(c *gin.Context) {
 	userId := c.Keys[config.PayloadUserId].(string)
-	user, err := h.userSvc.GetUserById(userId)
+	user, svcCode, err := h.userSvc.GetUserById(userId)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }
 
 func (h UserHandler) signup(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, config.ErrFailedReadBody.Error(), nil)
-		c.JSON(http.StatusBadRequest, message)
+		svcCode := config.SvcFailedReadBody
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	user, err := h.userSvc.SignUp(body)
+	user, svcCode, err := h.userSvc.SignUp(body)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }
 
 func (h UserHandler) login(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, config.ErrFailedReadBody.Error(), nil)
-		c.JSON(http.StatusBadRequest, message)
+		svcCode := config.SvcFailedReadBody
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	token, err := h.userSvc.Login(body)
+	token, svcCode, err := h.userSvc.Login(body)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
 
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, token))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("token", token))
 }
 
 func (h UserHandler) getAllUsers(c *gin.Context) {
-	users, err := h.userSvc.GetAllUsers()
+	search := c.Query(config.SearchParam)
+	page, err := strconv.Atoi(c.Query(config.PageParam))
+	if page < 0 || err != nil {
+		page = 0
+	}
+
+	users, svcCode, err := h.userSvc.GetAllUsers(page, search)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, users))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("users", users))
 }
 
 func (h UserHandler) getUserById(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
+		svcCode := config.SvcMissingUserIdPar
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
 
-	user, err := h.userSvc.GetUserById(id)
+	user, svcCode, err := h.userSvc.GetUserById(id)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgEmpty, user))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }
 
 func (h UserHandler) createUser(c *gin.Context) {
 	var body request.User
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
-		c.JSON(http.StatusBadRequest, message)
+		svcCode := config.SvcFailedReadBody
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	user, err := h.userSvc.CreateUser(body)
+	user, svcCode, err := h.userSvc.CreateUser(body)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusCreated, util.MakeMessage(util.MessageSuccess, config.MsgUserCreated, user))
+	c.JSON(http.StatusCreated, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }
 
 func (h UserHandler) updateUser(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
+		svcCode := config.SvcMissingUserIdPar
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
 	var body request.User
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
-		c.JSON(http.StatusBadRequest, message)
+		svcCode := config.SvcFailedReadBody
+		c.JSON(http.StatusBadRequest, util.NewErrResponse(svcCode.Message, svcCode.Code))
 		return
 	}
 
-	user, err := h.userSvc.UpdateUser(id, body)
+	user, svcCode, err := h.userSvc.UpdateUser(id, body)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgUserUpdated, user))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }
 
 func (h UserHandler) deleteUser(c *gin.Context) {
-	id := c.Query(config.QueryId)
+	id := c.Param(config.UserId)
 	if id == "" {
-		message := util.MakeMessage(util.MessageError, config.ErrMissingIdPar.Error(), nil)
+		svcCode := config.SvcMissingUserIdPar
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
 
-	user, err := h.userSvc.DeleteUser(id)
+	user, svcCode, err := h.userSvc.DeleteUser(id)
 	if err != nil {
-		message := util.MakeMessage(util.MessageError, err.Error(), nil)
+		message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 		c.JSON(http.StatusUnprocessableEntity, message)
 		return
 	}
-	c.JSON(http.StatusOK, util.MakeMessage(util.MessageSuccess, config.MsgUserDeleted, user))
+	c.JSON(http.StatusOK, util.NewResponse(svcCode.Message, svcCode.Code).AddKey("user", user))
 }

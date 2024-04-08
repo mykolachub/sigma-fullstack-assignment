@@ -3,9 +3,11 @@
 package mocks
 
 import (
-	request "sigma-test/internal/request"
+	config "sigma-test/config"
 
 	mock "github.com/stretchr/testify/mock"
+
+	request "sigma-test/internal/request"
 
 	response "sigma-test/internal/response"
 )
@@ -24,7 +26,7 @@ func (_m *UserService) EXPECT() *UserService_Expecter {
 }
 
 // CreateUser provides a mock function with given fields: user
-func (_m *UserService) CreateUser(user request.User) (response.User, error) {
+func (_m *UserService) CreateUser(user request.User) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(user)
 
 	if len(ret) == 0 {
@@ -32,8 +34,9 @@ func (_m *UserService) CreateUser(user request.User) (response.User, error) {
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(request.User) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(request.User) (response.User, config.ServiceCode, error)); ok {
 		return rf(user)
 	}
 	if rf, ok := ret.Get(0).(func(request.User) response.User); ok {
@@ -42,13 +45,19 @@ func (_m *UserService) CreateUser(user request.User) (response.User, error) {
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(request.User) error); ok {
+	if rf, ok := ret.Get(1).(func(request.User) config.ServiceCode); ok {
 		r1 = rf(user)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(request.User) error); ok {
+		r2 = rf(user)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
@@ -69,18 +78,18 @@ func (_c *UserService_CreateUser_Call) Run(run func(user request.User)) *UserSer
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) Return(_a0 response.User, _a1 error) *UserService_CreateUser_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_CreateUser_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_CreateUser_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) RunAndReturn(run func(request.User) (response.User, error)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) RunAndReturn(run func(request.User) (response.User, config.ServiceCode, error)) *UserService_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteUser provides a mock function with given fields: id
-func (_m *UserService) DeleteUser(id string) (response.User, error) {
+func (_m *UserService) DeleteUser(id string) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
@@ -88,8 +97,9 @@ func (_m *UserService) DeleteUser(id string) (response.User, error) {
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(string) (response.User, config.ServiceCode, error)); ok {
 		return rf(id)
 	}
 	if rf, ok := ret.Get(0).(func(string) response.User); ok {
@@ -98,13 +108,19 @@ func (_m *UserService) DeleteUser(id string) (response.User, error) {
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(string) config.ServiceCode); ok {
 		r1 = rf(id)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(id)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
@@ -125,44 +141,51 @@ func (_c *UserService_DeleteUser_Call) Run(run func(id string)) *UserService_Del
 	return _c
 }
 
-func (_c *UserService_DeleteUser_Call) Return(_a0 response.User, _a1 error) *UserService_DeleteUser_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_DeleteUser_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_DeleteUser_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_DeleteUser_Call) RunAndReturn(run func(string) (response.User, error)) *UserService_DeleteUser_Call {
+func (_c *UserService_DeleteUser_Call) RunAndReturn(run func(string) (response.User, config.ServiceCode, error)) *UserService_DeleteUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAllUsers provides a mock function with given fields:
-func (_m *UserService) GetAllUsers() ([]response.User, error) {
-	ret := _m.Called()
+// GetAllUsers provides a mock function with given fields: page, search
+func (_m *UserService) GetAllUsers(page int, search string) ([]response.User, config.ServiceCode, error) {
+	ret := _m.Called(page, search)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllUsers")
 	}
 
 	var r0 []response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]response.User, error)); ok {
-		return rf()
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(int, string) ([]response.User, config.ServiceCode, error)); ok {
+		return rf(page, search)
 	}
-	if rf, ok := ret.Get(0).(func() []response.User); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(int, string) []response.User); ok {
+		r0 = rf(page, search)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]response.User)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(int, string) config.ServiceCode); ok {
+		r1 = rf(page, search)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(int, string) error); ok {
+		r2 = rf(page, search)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_GetAllUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllUsers'
@@ -171,29 +194,31 @@ type UserService_GetAllUsers_Call struct {
 }
 
 // GetAllUsers is a helper method to define mock.On call
-func (_e *UserService_Expecter) GetAllUsers() *UserService_GetAllUsers_Call {
-	return &UserService_GetAllUsers_Call{Call: _e.mock.On("GetAllUsers")}
+//   - page int
+//   - search string
+func (_e *UserService_Expecter) GetAllUsers(page interface{}, search interface{}) *UserService_GetAllUsers_Call {
+	return &UserService_GetAllUsers_Call{Call: _e.mock.On("GetAllUsers", page, search)}
 }
 
-func (_c *UserService_GetAllUsers_Call) Run(run func()) *UserService_GetAllUsers_Call {
+func (_c *UserService_GetAllUsers_Call) Run(run func(page int, search string)) *UserService_GetAllUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(int), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *UserService_GetAllUsers_Call) Return(_a0 []response.User, _a1 error) *UserService_GetAllUsers_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_GetAllUsers_Call) Return(_a0 []response.User, _a1 config.ServiceCode, _a2 error) *UserService_GetAllUsers_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_GetAllUsers_Call) RunAndReturn(run func() ([]response.User, error)) *UserService_GetAllUsers_Call {
+func (_c *UserService_GetAllUsers_Call) RunAndReturn(run func(int, string) ([]response.User, config.ServiceCode, error)) *UserService_GetAllUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUserByEmail provides a mock function with given fields: email
-func (_m *UserService) GetUserByEmail(email string) (response.User, error) {
+func (_m *UserService) GetUserByEmail(email string) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(email)
 
 	if len(ret) == 0 {
@@ -201,8 +226,9 @@ func (_m *UserService) GetUserByEmail(email string) (response.User, error) {
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(string) (response.User, config.ServiceCode, error)); ok {
 		return rf(email)
 	}
 	if rf, ok := ret.Get(0).(func(string) response.User); ok {
@@ -211,13 +237,19 @@ func (_m *UserService) GetUserByEmail(email string) (response.User, error) {
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(string) config.ServiceCode); ok {
 		r1 = rf(email)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(email)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_GetUserByEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByEmail'
@@ -238,18 +270,18 @@ func (_c *UserService_GetUserByEmail_Call) Run(run func(email string)) *UserServ
 	return _c
 }
 
-func (_c *UserService_GetUserByEmail_Call) Return(_a0 response.User, _a1 error) *UserService_GetUserByEmail_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_GetUserByEmail_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_GetUserByEmail_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_GetUserByEmail_Call) RunAndReturn(run func(string) (response.User, error)) *UserService_GetUserByEmail_Call {
+func (_c *UserService_GetUserByEmail_Call) RunAndReturn(run func(string) (response.User, config.ServiceCode, error)) *UserService_GetUserByEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUserById provides a mock function with given fields: id
-func (_m *UserService) GetUserById(id string) (response.User, error) {
+func (_m *UserService) GetUserById(id string) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
@@ -257,8 +289,9 @@ func (_m *UserService) GetUserById(id string) (response.User, error) {
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(string) (response.User, config.ServiceCode, error)); ok {
 		return rf(id)
 	}
 	if rf, ok := ret.Get(0).(func(string) response.User); ok {
@@ -267,13 +300,19 @@ func (_m *UserService) GetUserById(id string) (response.User, error) {
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
+	if rf, ok := ret.Get(1).(func(string) config.ServiceCode); ok {
 		r1 = rf(id)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(string) error); ok {
+		r2 = rf(id)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_GetUserById_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserById'
@@ -294,18 +333,18 @@ func (_c *UserService_GetUserById_Call) Run(run func(id string)) *UserService_Ge
 	return _c
 }
 
-func (_c *UserService_GetUserById_Call) Return(_a0 response.User, _a1 error) *UserService_GetUserById_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_GetUserById_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_GetUserById_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_GetUserById_Call) RunAndReturn(run func(string) (response.User, error)) *UserService_GetUserById_Call {
+func (_c *UserService_GetUserById_Call) RunAndReturn(run func(string) (response.User, config.ServiceCode, error)) *UserService_GetUserById_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Login provides a mock function with given fields: body
-func (_m *UserService) Login(body request.User) (string, error) {
+func (_m *UserService) Login(body request.User) (string, config.ServiceCode, error) {
 	ret := _m.Called(body)
 
 	if len(ret) == 0 {
@@ -313,8 +352,9 @@ func (_m *UserService) Login(body request.User) (string, error) {
 	}
 
 	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(request.User) (string, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(request.User) (string, config.ServiceCode, error)); ok {
 		return rf(body)
 	}
 	if rf, ok := ret.Get(0).(func(request.User) string); ok {
@@ -323,13 +363,19 @@ func (_m *UserService) Login(body request.User) (string, error) {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(request.User) error); ok {
+	if rf, ok := ret.Get(1).(func(request.User) config.ServiceCode); ok {
 		r1 = rf(body)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(request.User) error); ok {
+		r2 = rf(body)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_Login_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Login'
@@ -350,18 +396,18 @@ func (_c *UserService_Login_Call) Run(run func(body request.User)) *UserService_
 	return _c
 }
 
-func (_c *UserService_Login_Call) Return(_a0 string, _a1 error) *UserService_Login_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_Login_Call) Return(_a0 string, _a1 config.ServiceCode, _a2 error) *UserService_Login_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_Login_Call) RunAndReturn(run func(request.User) (string, error)) *UserService_Login_Call {
+func (_c *UserService_Login_Call) RunAndReturn(run func(request.User) (string, config.ServiceCode, error)) *UserService_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SignUp provides a mock function with given fields: body
-func (_m *UserService) SignUp(body request.User) (response.User, error) {
+func (_m *UserService) SignUp(body request.User) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(body)
 
 	if len(ret) == 0 {
@@ -369,8 +415,9 @@ func (_m *UserService) SignUp(body request.User) (response.User, error) {
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(request.User) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(request.User) (response.User, config.ServiceCode, error)); ok {
 		return rf(body)
 	}
 	if rf, ok := ret.Get(0).(func(request.User) response.User); ok {
@@ -379,13 +426,19 @@ func (_m *UserService) SignUp(body request.User) (response.User, error) {
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(request.User) error); ok {
+	if rf, ok := ret.Get(1).(func(request.User) config.ServiceCode); ok {
 		r1 = rf(body)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(request.User) error); ok {
+		r2 = rf(body)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_SignUp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignUp'
@@ -406,18 +459,18 @@ func (_c *UserService_SignUp_Call) Run(run func(body request.User)) *UserService
 	return _c
 }
 
-func (_c *UserService_SignUp_Call) Return(_a0 response.User, _a1 error) *UserService_SignUp_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_SignUp_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_SignUp_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_SignUp_Call) RunAndReturn(run func(request.User) (response.User, error)) *UserService_SignUp_Call {
+func (_c *UserService_SignUp_Call) RunAndReturn(run func(request.User) (response.User, config.ServiceCode, error)) *UserService_SignUp_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateUser provides a mock function with given fields: id, user
-func (_m *UserService) UpdateUser(id string, user request.User) (response.User, error) {
+func (_m *UserService) UpdateUser(id string, user request.User) (response.User, config.ServiceCode, error) {
 	ret := _m.Called(id, user)
 
 	if len(ret) == 0 {
@@ -425,8 +478,9 @@ func (_m *UserService) UpdateUser(id string, user request.User) (response.User, 
 	}
 
 	var r0 response.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, request.User) (response.User, error)); ok {
+	var r1 config.ServiceCode
+	var r2 error
+	if rf, ok := ret.Get(0).(func(string, request.User) (response.User, config.ServiceCode, error)); ok {
 		return rf(id, user)
 	}
 	if rf, ok := ret.Get(0).(func(string, request.User) response.User); ok {
@@ -435,13 +489,19 @@ func (_m *UserService) UpdateUser(id string, user request.User) (response.User, 
 		r0 = ret.Get(0).(response.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, request.User) error); ok {
+	if rf, ok := ret.Get(1).(func(string, request.User) config.ServiceCode); ok {
 		r1 = rf(id, user)
 	} else {
-		r1 = ret.Error(1)
+		r1 = ret.Get(1).(config.ServiceCode)
 	}
 
-	return r0, r1
+	if rf, ok := ret.Get(2).(func(string, request.User) error); ok {
+		r2 = rf(id, user)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
 
 // UserService_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
@@ -463,12 +523,12 @@ func (_c *UserService_UpdateUser_Call) Run(run func(id string, user request.User
 	return _c
 }
 
-func (_c *UserService_UpdateUser_Call) Return(_a0 response.User, _a1 error) *UserService_UpdateUser_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *UserService_UpdateUser_Call) Return(_a0 response.User, _a1 config.ServiceCode, _a2 error) *UserService_UpdateUser_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *UserService_UpdateUser_Call) RunAndReturn(run func(string, request.User) (response.User, error)) *UserService_UpdateUser_Call {
+func (_c *UserService_UpdateUser_Call) RunAndReturn(run func(string, request.User) (response.User, config.ServiceCode, error)) *UserService_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -8,28 +8,41 @@ tasks:
     - go run main.go
 
   app:
-    desc: Starts API Server and Database
+    desc: Starts API Server and Databases
     aliases: [a]
     cmds:
-    - task: db:run
+    - task: postgres
+    - task: postgres:migrate
+    - task: aerospike
     - task: server
 
-  db:run:
+  db:
+    desc: Start all Databases
+    cmds:
+    - task: postgres
+    - task: aerospike
+
+  aerospike:
+    desc: Starts Aerospike
+    cmds:
+    - docker run -d --name sigma-db-aerospike -p 3000-3002:3000-3002 aerospike/aerospike-server-enterprise
+
+  postgres:
     desc: Starts Database
     cmds:
     - docker-compose up -d
 
-  db:stop:
+  postgres:stop:
     desc: Stops Database
     cmds:
     - docker-compose down
 
-  db:migrate:
+  postgres:migrate:
     desc: Starts Database Migrations
     dir: internal/storage/postgres/migrations
     dotenv:
     - '.env'
     vars:
-      DB_CONN_STRING: postgres://$SIGMA_DBUSER:$SIGMA_DBPASSWORD@localhost/$SIGMA_DBNAME?sslmode=$SIGMA_DBSSLMODE
+      DB_CONN_STRING: postgres://$SIGMA_POSTGRES_DBUSER:$SIGMA_POSTGRES_DBPASSWORD@localhost/$SIGMA_POSTGRES_DBNAME?sslmode=$SIGMA_POSTGRES_DBSSLMODE
     cmds:
     - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "{{.DB_CONN_STRING}}" up

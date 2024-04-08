@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sigma-test/config"
 	"sigma-test/internal/controller/mocks"
 	"sigma-test/internal/entity"
 	"sigma-test/internal/request"
@@ -39,7 +41,7 @@ func TestSignup(t *testing.T) {
 		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test123", Role: "user"}
-		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser.ToEntity()), nil)
+		usrSvc.EXPECT().SignUp(mockUser).Return(response.User(mockUser.ToEntity()), config.SvcFailedCreateUser, nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := signUpRequest(t, string(body))
@@ -65,7 +67,7 @@ func TestSignup(t *testing.T) {
 		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test123", Role: "user"}
-		usrSvc.EXPECT().SignUp(mockUser).Return(response.User{}, errors.New("User already exists"))
+		usrSvc.EXPECT().SignUp(mockUser).Return(response.User{}, config.SvcUserExists, errors.New("User already exists"))
 
 		body, _ := json.Marshal(mockUser)
 		req := signUpRequest(t, string(body))
@@ -89,7 +91,7 @@ func TestLogin(t *testing.T) {
 		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		usrSvc.EXPECT().Login(mockUser).Return("token", nil)
+		usrSvc.EXPECT().Login(mockUser).Return("token", config.SvcEmptyMsg, nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := loginRequest(t, string(body))
@@ -115,7 +117,7 @@ func TestLogin(t *testing.T) {
 		r, usrSvc, _ := makeUserService(t)
 
 		mockUser := request.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
-		usrSvc.EXPECT().Login(mockUser).Return("", errors.New("Invalid Credantials"))
+		usrSvc.EXPECT().Login(mockUser).Return("", config.SvcInvalidCredentials, errors.New("Invalid Credantials"))
 
 		body, _ := json.Marshal(mockUser)
 		req := loginRequest(t, string(body))
@@ -129,7 +131,7 @@ func TestLogin(t *testing.T) {
 
 func TestMe(t *testing.T) {
 	meRequest := func(t *testing.T, token string) *http.Request {
-		req, err := http.NewRequest("GET", "/api/user/me", nil)
+		req, err := http.NewRequest("GET", "/api/users/me", nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -141,7 +143,7 @@ func TestMe(t *testing.T) {
 
 		mockUser := entity.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
-		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser.ToResponse(), nil)
+		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser.ToResponse(), config.SvcEmptyMsg, nil)
 
 		req := meRequest(t, mockToken)
 		res := httptest.NewRecorder()
@@ -155,7 +157,7 @@ func TestMe(t *testing.T) {
 		r, usrSvc, handCfg := makeUserService(t)
 
 		mockToken, _ := util.GenerateJWTToken("INVALID_ID", "INVALID_ROLE", handCfg.JwtSecret)
-		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, errors.New("Invalid token"))
+		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, config.SvcInvalidToken, errors.New("Invalid token"))
 
 		req := meRequest(t, mockToken)
 		res := httptest.NewRecorder()
@@ -179,8 +181,9 @@ func TestMe(t *testing.T) {
 }
 
 func TestGetAllUsers(t *testing.T) {
-	getAllUsersRequest := func(t *testing.T, token string) *http.Request {
-		req, err := http.NewRequest("GET", "/api/users", nil)
+	getAllUsersRequest := func(t *testing.T, page int, search, token string) *http.Request {
+		url := fmt.Sprintf("/api/users?page=%v&search=%v", page, search)
+		req, err := http.NewRequest("GET", url, nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -192,9 +195,10 @@ func TestGetAllUsers(t *testing.T) {
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
-		usrSvc.EXPECT().GetAllUsers().Return([]response.User{mockUser}, nil)
+		page, search := 1, ""
+		usrSvc.EXPECT().GetAllUsers(page, search).Return([]response.User{mockUser}, config.SvcEmptyMsg, nil)
 
-		req := getAllUsersRequest(t, mockToken)
+		req := getAllUsersRequest(t, page, search, mockToken)
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
@@ -206,7 +210,7 @@ func TestGetAllUsers(t *testing.T) {
 		r, _, _ := makeUserService(t)
 
 		mockToken := ""
-		req := getAllUsersRequest(t, mockToken)
+		req := getAllUsersRequest(t, 1, "", mockToken)
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
@@ -217,7 +221,7 @@ func TestGetAllUsers(t *testing.T) {
 
 func TestGetUsersById(t *testing.T) {
 	getUsersByIdRequest := func(t *testing.T, id, token string) *http.Request {
-		req, err := http.NewRequest("GET", "/api/user?id="+id, nil)
+		req, err := http.NewRequest("GET", "/api/users/"+id, nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -229,7 +233,7 @@ func TestGetUsersById(t *testing.T) {
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
-		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser, nil)
+		usrSvc.EXPECT().GetUserById(mockUser.ID).Return(mockUser, config.SvcEmptyMsg, nil)
 
 		req := getUsersByIdRequest(t, mockUser.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -244,7 +248,7 @@ func TestGetUsersById(t *testing.T) {
 
 		mockUser := response.User{ID: "test", Email: "test@test.com", Password: "test", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockUser.ID, mockUser.Role, handCfg.JwtSecret)
-		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, errors.New("Invalid id"))
+		usrSvc.EXPECT().GetUserById("INVALID_ID").Return(response.User{}, config.SvcInvalidToken, errors.New("Invalid id"))
 
 		req := getUsersByIdRequest(t, "INVALID_ID", mockToken)
 		res := httptest.NewRecorder()
@@ -259,7 +263,7 @@ func TestGetUsersById(t *testing.T) {
 
 		mockToken := ""
 
-		req := getUsersByIdRequest(t, "", mockToken)
+		req := getUsersByIdRequest(t, "some_id", mockToken)
 		res := httptest.NewRecorder()
 
 		r.ServeHTTP(res, req)
@@ -284,7 +288,7 @@ func TestCreateUser(t *testing.T) {
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		usrSvc.EXPECT().CreateUser(mockUser).Return(mockAdmin.ToResponse(), nil)
+		usrSvc.EXPECT().CreateUser(mockUser).Return(mockAdmin.ToResponse(), config.SvcUserCreated, nil)
 
 		body, _ := json.Marshal(mockUser)
 		req := createUserRequest(t, string(body), mockToken)
@@ -316,7 +320,7 @@ func TestCreateUser(t *testing.T) {
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		mockUser := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
-		usrSvc.EXPECT().CreateUser(mockUser).Return(response.User{}, errors.New("User already exists"))
+		usrSvc.EXPECT().CreateUser(mockUser).Return(response.User{}, config.SvcUserExists, errors.New("User already exists"))
 
 		body, _ := json.Marshal(mockUser)
 		req := createUserRequest(t, string(body), mockToken)
@@ -343,7 +347,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	updateUserRequest := func(t *testing.T, id, body, token string) *http.Request {
-		req, err := http.NewRequest("PATCH", "/api/users?id="+id, bytes.NewBufferString(body))
+		req, err := http.NewRequest("PATCH", "/api/users/"+id, bytes.NewBufferString(body))
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -358,7 +362,7 @@ func TestUpdateUser(t *testing.T) {
 
 		updateBody := request.User{Email: "NEW"}
 		updatedUser := response.User{ID: "user", Email: "NEW", Password: "user", Role: "user"}
-		usrSvc.EXPECT().UpdateUser(mockOwner.ID, updateBody).Return(updatedUser, nil)
+		usrSvc.EXPECT().UpdateUser(mockOwner.ID, updateBody).Return(updatedUser, config.SvcUserUpdated, nil)
 
 		body, _ := json.Marshal(updateBody)
 		req := updateUserRequest(t, mockOwner.ID, string(body), mockToken)
@@ -378,7 +382,7 @@ func TestUpdateUser(t *testing.T) {
 		mockUser := entity.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		updateBody := request.User{Email: "NEW"}
 		updatedUser := response.User{ID: "user", Email: "NEW", Password: "user", Role: "user"}
-		usrSvc.EXPECT().UpdateUser(mockUser.ID, updateBody).Return(updatedUser, nil)
+		usrSvc.EXPECT().UpdateUser(mockUser.ID, updateBody).Return(updatedUser, config.SvcUserUpdated, nil)
 
 		body, _ := json.Marshal(updateBody)
 		req := updateUserRequest(t, mockUser.ID, string(body), mockToken)
@@ -414,7 +418,7 @@ func TestUpdateUser(t *testing.T) {
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
 		updateBody := request.User{Email: "NEW"}
-		usrSvc.EXPECT().UpdateUser("INVALID_ID", updateBody).Return(response.User{}, errors.New("No such user"))
+		usrSvc.EXPECT().UpdateUser("INVALID_ID", updateBody).Return(response.User{}, config.SvcFailedUpdateUser, errors.New("No such user"))
 
 		body, _ := json.Marshal(updateBody)
 		req := updateUserRequest(t, "INVALID_ID", string(body), mockToken)
@@ -441,7 +445,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	deleteUserRequest := func(t *testing.T, id, token string) *http.Request {
-		req, err := http.NewRequest("DELETE", "/api/users?id="+id, nil)
+		req, err := http.NewRequest("DELETE", "/api/users/"+id, nil)
 		require.NoError(t, err)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Add("Authorization", "Bearer "+token)
@@ -454,7 +458,7 @@ func TestDeleteUser(t *testing.T) {
 		mockOwner := request.User{ID: "user", Email: "user", Password: "user", Role: "user"}
 		mockToken, _ := util.GenerateJWTToken(mockOwner.ID, mockOwner.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(response.User(mockOwner.ToEntity()), nil)
+		usrSvc.EXPECT().DeleteUser(mockOwner.ID).Return(response.User(mockOwner.ToEntity()), config.SvcUserDeleted, nil)
 
 		req := deleteUserRequest(t, mockOwner.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -471,7 +475,7 @@ func TestDeleteUser(t *testing.T) {
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(response.User(mockUser.ToEntity()), nil)
+		usrSvc.EXPECT().DeleteUser(mockUser.ID).Return(response.User(mockUser.ToEntity()), config.SvcUserDeleted, nil)
 
 		req := deleteUserRequest(t, mockUser.ID, mockToken)
 		res := httptest.NewRecorder()
@@ -502,7 +506,7 @@ func TestDeleteUser(t *testing.T) {
 		mockAdmin := request.User{ID: "admin", Email: "admin", Password: "admin", Role: "admin"}
 		mockToken, _ := util.GenerateJWTToken(mockAdmin.ID, mockAdmin.Role, handCfg.JwtSecret)
 
-		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(response.User{}, errors.New("No such user"))
+		usrSvc.EXPECT().DeleteUser("INVALID_ID").Return(response.User{}, config.SvcFailedDeleteUser, errors.New("No such user"))
 
 		req := deleteUserRequest(t, "INVALID_ID", mockToken)
 		res := httptest.NewRecorder()

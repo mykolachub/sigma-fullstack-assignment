@@ -30,7 +30,7 @@ const User = ({ email, id, role }: UserProps) => {
     }
     try {
       await deleteUser(id);
-      const users = await getAllUsers();
+      const { users } = await getAllUsers();
       useUserStore.setState({ users: users });
       addToastInfo('user deleted');
       if (isOwner) {

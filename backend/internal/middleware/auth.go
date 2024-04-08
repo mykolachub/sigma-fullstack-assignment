@@ -9,11 +9,24 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func OnlyAdmin() gin.HandlerFunc {
+type MiddlewareConfig struct {
+	JwtSecret string
+}
+
+type Middleware struct {
+	cfg MiddlewareConfig
+}
+
+func InitMiddlewares(cfg MiddlewareConfig) Middleware {
+	return Middleware{cfg: cfg}
+}
+
+func (m Middleware) OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		role := ctx.Keys[config.PayloadUserRole]
 		if role != config.AdminRole {
-			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			svcCode := config.SvcNoPermissions
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
@@ -22,16 +35,18 @@ func OnlyAdmin() gin.HandlerFunc {
 	}
 }
 
-func OnlyAdminOrOwner() gin.HandlerFunc {
+func (m Middleware) OnlyAdminOrOwner() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		payloadRole := ctx.Keys[config.PayloadUserRole]
 		payloadId := ctx.Keys[config.PayloadUserId]
 
 		isAdmin := payloadRole == config.AdminRole
-		isOwner := payloadId == ctx.Query(config.QueryId)
+		isOwner := payloadId == ctx.Param(config.UserId)
 
 		if !isOwner && !isAdmin {
-			message := util.MakeMessage(util.MessageError, config.ErrNoPermissions.Error(), nil)
+			svcCode := config.SvcNoPermissions
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
+			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			ctx.AbortWithStatusJSON(http.StatusForbidden, message)
 			return
 		}
@@ -40,25 +55,26 @@ func OnlyAdminOrOwner() gin.HandlerFunc {
 	}
 }
 
-func Protect(secret string) gin.HandlerFunc {
+func (m Middleware) Protect() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader(config.AuthorizationHeader)
 		if len(authHeader) == 0 {
-			message := util.MakeMessage(util.MessageError, config.ErrNoAuthHeader.Error(), nil)
+			svcCode := config.SvcNoAuthHeader
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
-		accessToken, err := util.ValidateBearerHeader(authHeader)
+		accessToken, svcCode, err := util.ValidateBearerHeader(authHeader)
 		if err != nil {
-			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
 
-		token, err := util.ParseAndValidateJWTToken(accessToken, secret)
+		token, svcCode, err := util.ParseAndValidateJWTToken(accessToken, m.cfg.JwtSecret)
 		if err != nil {
-			message := util.MakeMessage(util.MessageError, err.Error(), nil)
+			message := util.NewErrResponse(svcCode.Message, svcCode.Code)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, message)
 			return
 		}
