@@ -25,7 +25,7 @@ const Home = () => {
 
   const search = async (search: string = '') => {
     try {
-      const users = await getAllUsers(search);
+      const { users } = await getAllUsers(search);
       useUserStore.setState({ users });
     } catch (error) {
       if (error instanceof Error) {

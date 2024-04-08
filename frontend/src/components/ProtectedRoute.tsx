@@ -22,6 +22,7 @@ const ProtectedRoute = () => {
     if (!userPromise) return denyAccessAndRedirect();
     userPromise
       .then((user) => {
+        console.log(user.email);
         setAuthenticated(user !== null);
 
         setUser(user);

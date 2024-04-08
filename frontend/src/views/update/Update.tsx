@@ -33,7 +33,7 @@ const UpdateUser = () => {
     formState: { errors },
   } = useForm<Inputs>({
     defaultValues: async () => {
-      const user = await getUserById(id);
+      const { user } = await getUserById(id);
       return user as Inputs;
     },
   });

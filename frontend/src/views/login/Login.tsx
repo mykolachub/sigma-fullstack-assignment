@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import AppButton from '../../components/buttons/AppButton';
