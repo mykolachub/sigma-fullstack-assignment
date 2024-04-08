@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sigma-test/internal/entity"
 
+	"github.com/adrianbrad/queue"
 	aero "github.com/aerospike/aerospike-client-go/v7"
 )
 
@@ -55,9 +56,6 @@ func (r *PageRepo) ResetPageCount(name string) error {
 }
 
 func (r *PageRepo) TrackPage(name string) error {
-	// TODO: Check the page name
-
-	// Create key as a page name
 	key, err := aero.NewKey(r.cfg.Namespace, r.cfg.Set, name)
 	if err != nil {
 		return err
@@ -67,4 +65,19 @@ func (r *PageRepo) TrackPage(name string) error {
 	incrementBy := aero.NewBin("count", 1)
 	_, err = r.client.Operate(policy, key, aero.AddOp(incrementBy))
 	return err
+}
+
+func (r *PageRepo) BatchTrackPages(q *queue.Linked[string]) error {
+	var batchRecords []aero.BatchRecordIfc
+	for v := range q.Iterator() {
+		key, err := aero.NewKey(r.cfg.Namespace, r.cfg.Set, v)
+		if err != nil {
+			return err
+		}
+
+		incrementBy := aero.NewBin("count", 1)
+		record := aero.NewBatchWrite(aero.NewBatchWritePolicy(), key, aero.AddOp(incrementBy))
+		batchRecords = append(batchRecords, record)
+	}
+	return r.client.BatchOperate(aero.NewWriteBatchPolicy(), batchRecords)
 }

@@ -11,6 +11,7 @@ require (
 )
 
 require (
+	github.com/adrianbrad/queue v1.3.0 // indirect
 	github.com/aerospike/aerospike-client-go/v7 v7.2.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect

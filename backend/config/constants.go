@@ -21,4 +21,6 @@ const (
 	JWTClaimsId         = "id"
 	JWTClaimsRole       = "role"
 	JWTClaimsExp        = "exp"
+
+	PageMaxQueueSize = 10
 )

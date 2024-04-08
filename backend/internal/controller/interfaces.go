@@ -4,6 +4,8 @@ import (
 	"sigma-test/config"
 	"sigma-test/internal/request"
 	"sigma-test/internal/response"
+
+	"github.com/adrianbrad/queue"
 )
 
 // Easely extensible with other services
@@ -31,6 +33,6 @@ type UserService interface {
 }
 
 type PageService interface {
-	TrackPage(name string) (config.ServiceCode, error)
+	TrackPage(q *queue.Linked[string], name string) (config.ServiceCode, error)
 	GetPageCount(name string) (response.Page, config.ServiceCode, error)
 }

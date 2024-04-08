@@ -3,6 +3,8 @@ package service
 import (
 	"sigma-test/config"
 	"sigma-test/internal/response"
+
+	"github.com/adrianbrad/queue"
 )
 
 type PageService struct {
@@ -13,11 +15,15 @@ func NewPageService(r PageRepo) PageService {
 	return PageService{repo: r}
 }
 
-func (s PageService) TrackPage(name string) (config.ServiceCode, error) {
-	err := s.repo.TrackPage(name)
-	if err != nil {
-		return config.SvcFailedTrackPage, config.SvcFailedTrackPage.ToError()
+func (s PageService) TrackPage(q *queue.Linked[string], name string) (config.ServiceCode, error) {
+	if q.Size() > config.PageMaxQueueSize {
+		err := s.repo.BatchTrackPages(q)
+		if err != nil {
+			return config.SvcFailedTrackPage, config.SvcFailedTrackPage.ToError()
+		}
+		q.Clear()
 	}
+	q.Offer(name)
 
 	return config.SvcPageTracked, nil
 }

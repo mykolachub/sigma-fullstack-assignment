@@ -5,6 +5,7 @@ import (
 	"sigma-test/config"
 	"sigma-test/internal/util"
 
+	"github.com/adrianbrad/queue"
 	"github.com/gin-gonic/gin"
 	"github.com/sony/gobreaker"
 )
@@ -12,10 +13,11 @@ import (
 type PageHandler struct {
 	pageSvc PageService
 	cb      *gobreaker.CircuitBreaker
+	q       *queue.Linked[string]
 }
 
 func InitPageHandler(r *gin.Engine, pageSvc PageService, cb *gobreaker.CircuitBreaker) {
-	handler := PageHandler{pageSvc: pageSvc, cb: cb}
+	handler := PageHandler{pageSvc: pageSvc, cb: cb, q: &queue.Linked[string]{}}
 
 	r.POST("/api/page/track", handler.TrackPage)
 	r.GET("/api/page/track", handler.GetPageCount)
@@ -30,7 +32,7 @@ func (h PageHandler) TrackPage(c *gin.Context) {
 	}
 
 	svcCode, err := h.cb.Execute(func() (interface{}, error) {
-		return h.pageSvc.TrackPage(pageName)
+		return h.pageSvc.TrackPage(h.q, pageName)
 	})
 
 	if err != nil {

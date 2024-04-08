@@ -2,6 +2,8 @@ package service
 
 import (
 	"sigma-test/internal/entity"
+
+	"github.com/adrianbrad/queue"
 )
 
 type Storages struct {
@@ -23,4 +25,5 @@ type PageRepo interface {
 	GetPage(name string) (entity.Page, error)
 	ResetPageCount(name string) error
 	TrackPage(name string) error
+	BatchTrackPages(q *queue.Linked[string]) error
 }
