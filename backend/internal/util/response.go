@@ -1,31 +1,30 @@
 package util
 
-const (
-	MessageError   = 0
-	MessageSuccess = 1
-)
+type Response struct {
+	Code    int                    `json:"code"`
+	Message string                 `json:"message,omitempty"`
+	Data    map[string]interface{} `json:"data,omitempty"`
+	Status  string                 `json:"status"`
+}
 
-type MessageResponse map[string]any
-
-func MakeMessage(messType int, message string, data interface{}) MessageResponse {
-	response := MessageResponse{}
-
-	switch messType {
-	case MessageError:
-		response["status"] = "error"
-	case MessageSuccess:
-		response["status"] = "success"
-	default:
-		response["status"] = "success"
+func NewResponse(message string, code int) *Response {
+	return &Response{
+		Status:  "success",
+		Message: message,
+		Code:    code,
+		Data:    map[string]interface{}{},
 	}
+}
 
-	if message != "" {
-		response["message"] = message
+func NewErrResponse(message string, code int) Response {
+	return Response{
+		Status:  "error",
+		Message: message,
+		Code:    code,
 	}
+}
 
-	if data != nil {
-		response["data"] = data
-	}
-
-	return response
+func (r *Response) AddKey(key string, value interface{}) *Response {
+	r.Data[key] = value
+	return r
 }

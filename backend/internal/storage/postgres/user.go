@@ -113,7 +113,7 @@ func (s *UsersRepo) UpdateUser(id string, data entity.User) (entity.User, error)
 	}
 
 	if len(updates) == 0 {
-		return entity.User{}, config.ErrEmptyUpdateBody
+		return entity.User{}, config.SvcEmptyUpdateBody.ToError()
 	}
 
 	query := "UPDATE users SET " + strings.Join(updates, ", ") + " WHERE id = $1 RETURNING *"
