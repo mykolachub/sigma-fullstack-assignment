@@ -1,0 +1,36 @@
+version: '3'
+
+tasks:
+  server:
+    desc: Starts API Server
+    aliases: [s]
+    cmds:
+    - go run main.go
+
+  app:
+    desc: Starts API Server and Databases
+    aliases: [a]
+    cmds:
+    - task: db
+    - task: postgres:migrate
+    - task: server
+
+  db:
+    desc: Start all Databases
+    cmds:
+    - docker-compose up -d
+
+  db:stop:
+    desc: Start all Databases
+    cmds:
+    - docker-compose up -d
+
+  postgres:migrate:
+    desc: Starts Database Migrations
+    dir: internal/storage/postgres/migrations
+    dotenv:
+    - '.env'
+    vars:
+      DB_CONN_STRING: postgres://$SIGMA_POSTGRES_DBUSER:$SIGMA_POSTGRES_DBPASSWORD@localhost/$SIGMA_POSTGRES_DBNAME?sslmode=$SIGMA_POSTGRES_DBSSLMODE
+    cmds:
+    - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "{{.DB_CONN_STRING}}" up
