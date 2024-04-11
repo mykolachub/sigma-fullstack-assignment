@@ -4,15 +4,14 @@ services:
   postgres:
     image: postgres:latest
     container_name: sigma-inventory-db-postgres
-    restart: always
     ports:
       - '5433:5432'
     environment:
-      POSTGRES_DB: sigma-inventory-db-postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_database
+      POSTGRES_USER: inventory_username
+      POSTGRES_PASSWORD: inventory_password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - inventory_db_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data: {}
+  inventory_db_data:

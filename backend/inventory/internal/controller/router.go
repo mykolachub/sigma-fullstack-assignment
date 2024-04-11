@@ -8,10 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Services struct {
-	InvService InventoryService
-}
-
 func InitRouter(r *gin.Engine, services Services) *gin.Engine {
 	// CORS config
 	r.Use(cors.New(config.CorsConfig))
@@ -23,7 +19,7 @@ func InitRouter(r *gin.Engine, services Services) *gin.Engine {
 		})
 	})
 
-	InitInventoryHandler(r, services.InvService)
+	InitInventoryHandler(r, services.InventoryService)
 
 	return r
 }

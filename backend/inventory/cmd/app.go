@@ -7,6 +7,7 @@ import (
 	"sigma-inventory/config"
 	"sigma-inventory/internal/controller"
 	"sigma-inventory/internal/service"
+	"sigma-inventory/internal/storage/postgres"
 	pb "sigma-inventory/proto"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func server(port string) {
 		log.Fatal(err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterInventoryServiceServer(s, &service.Service{})
+	pb.RegisterInventoryServiceServer(s, pb.UnimplementedInventoryServiceServer{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
@@ -41,15 +42,31 @@ func Run(env *config.Env) {
 	go server(env.GrpcPort)
 
 	// gRPC Clients
-	invConn, invService := inventoryClient(env.GrpcInventoryClientPort)
-	defer invConn.Close()
+	// invConn, _ := inventoryClient(env.GrpcInventoryClientPort)
+	// defer invConn.Close()
+
+	db, err := postgres.InitDBConnection(postgres.PostgresConfig{
+		DBUser:     env.PostgresDBUser,
+		DBName:     env.PostgresDBName,
+		DBPassword: env.PostgresDBPassword,
+		DBSSLMode:  env.PostgresDBSSLMode,
+		DBPort:     env.PostgresDBPort,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	storages := service.Storages{
+		InventoryRepo: postgres.NewInventoryRepo(db),
+	}
+
+	services := controller.Services{
+		InventoryService: service.NewInventoryService(storages.InventoryRepo),
+	}
 
 	// HTTP Server
-	router := gin.Default()
-	services := controller.Services{
-		InvService: invService,
-	}
 	config.InitCorsConfig()
+	router := gin.Default()
 	r := controller.InitRouter(router, services)
 
 	r.Run(fmt.Sprintf(":%v", env.HttpPort))

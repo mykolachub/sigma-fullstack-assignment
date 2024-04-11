@@ -26,11 +26,12 @@ tasks:
     - docker-compose up -d
 
   postgres:migrate:
+    # TODO: update migrate script to use golang-migrate 
     desc: Starts Database Migrations
     dir: internal/storage/postgres/migrations
     dotenv:
     - '.env'
     vars:
-      DB_CONN_STRING: postgres://$SIGMA_POSTGRES_DBUSER:$SIGMA_POSTGRES_DBPASSWORD@localhost/$SIGMA_POSTGRES_DBNAME?sslmode=$SIGMA_POSTGRES_DBSSLMODE
+      DB_CONN_STRING: postgres://$SIGMA_POSTGRES_DBUSER:$SIGMA_POSTGRES_DBPASSWORD@localhost/$SIGMA_POSTGRES_DBNAME?sslmode=disable
     cmds:
     - docker run -v "$PWD":/migrations --network host migrate/migrate -path=/migrations/ -database "{{.DB_CONN_STRING}}" up

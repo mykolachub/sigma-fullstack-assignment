@@ -8,10 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type InventoryService interface {
-	proto.InventoryServiceClient
-}
-
 type InventoryHandler struct {
 	invSvc InventoryService
 }
