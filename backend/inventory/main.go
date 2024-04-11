@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"sigma-inventory/cmd"
+	"sigma-inventory/config"
+)
 
 func main() {
-	fmt.Println("boss")
+	env := config.ConfigEnv()
+
+	cmd.Run(env)
 }
