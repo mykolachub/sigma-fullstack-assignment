@@ -7,9 +7,11 @@ option go_package = "sigma-inventory/proto";
 service InventoryService {
     rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
     rpc GetProduct (GetProductRequest) returns (ProductResponse);
+    rpc GetAllProducts (GetAllProductsRequest) returns (GetAllProductsResponse);
     rpc UpdateProduct (UpdateProductRequest) returns (ProductResponse);
-    rpc DeleteProduct (UpdateProductRequest) returns (ProductResponse);
+    rpc DeleteProduct (DeleteProductRequest) returns (ProductResponse);
     rpc ReserveInventory(ReserveInventoryRequest) returns (ReserveInventoryResponse);
+    rpc FreeReservedInventory(FreeReservedInventoryRequest) returns (FreeReservedInventoryResponse);
     rpc DecrementInventory(DecrementInventoryRequest) returns (DecrementInventoryResponse);
 }
 
@@ -30,10 +32,19 @@ message GetProductRequest {
     string id = 1;
 }
 
+message GetAllProductsRequest {
+    
+}
+
+message GetAllProductsResponse {
+    repeated UpdateProductRequest products = 1;
+}
+
 message UpdateProductRequest {
     string id = 1;
     string name = 2;
     int32 quantity = 3;
+    int32 price = 4;
 }
 
 message DeleteProductRequest {
@@ -41,11 +52,18 @@ message DeleteProductRequest {
 }
 
 message ReserveInventoryRequest {
-    string order_id = 1;
-    repeated OrderItem order_items = 2;
+    repeated OrderItem order_items = 1;
 }
 
 message ReserveInventoryResponse {
+    repeated ReservedProduct reserved_products = 1;
+}
+
+message FreeReservedInventoryRequest {
+    repeated ReservedProduct reserved_products = 1;
+}
+
+message FreeReservedInventoryResponse {
     bool success = 1;
 }
 
@@ -60,4 +78,8 @@ message DecrementInventoryResponse {
 message OrderItem {
     string product_id = 1;
     int32 quantity = 2;
+}
+
+message ReservedProduct {
+    string reserved_id = 1;
 }
