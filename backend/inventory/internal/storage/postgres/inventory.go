@@ -108,19 +108,40 @@ func (r *InventoryRepo) DeleteInventory(id string) (entity.Inventory, error) {
 
 func (r *InventoryRepo) ReserveInventory(id string, quantity int) (entity.ReservedInventory, error) {
 	reserved := entity.ReservedInventory{}
+	product := entity.Inventory{}
 
 	var query string
 	var err error
 
+	tx, err := r.db.Begin()
+	if err != nil {
+		return entity.ReservedInventory{}, err
+	}
+	defer tx.Rollback()
+
+	query = "SELECT * FROM products WHERE products.product_id = $1"
+	err = tx.QueryRow(query, id).Scan(&product.ID, &product.Name, &product.Price, &product.Quantity)
+	if err != nil {
+		return entity.ReservedInventory{}, err
+	}
+	if product.Quantity < quantity {
+		return entity.ReservedInventory{}, errors.New("not enough product left to reserve")
+	}
+
 	// Decrement product quantity
-	query = "UPDATE products SET quantity = quantity - $2 WHERE products.product_id = $1"
-	_, err = r.db.Query(query, id, quantity)
+	query = "UPDATE products SET quantity = quantity - $2 WHERE products.product_id = $1 AND quantity - $2 >= 0"
+	_, err = tx.Exec(query, id, quantity)
 	if err != nil {
 		return entity.ReservedInventory{}, err
 	}
 
 	query = "INSERT INTO reserved_products(product_id, quantity) VALUES($1, $2) RETURNING *"
-	err = r.db.QueryRow(query, id, quantity).Scan(&reserved.ID, &reserved.ProductId, &reserved.Quantity)
+	err = tx.QueryRow(query, id, quantity).Scan(&reserved.ID, &reserved.ProductId, &reserved.Quantity)
+	if err != nil {
+		return entity.ReservedInventory{}, err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return entity.ReservedInventory{}, err
 	}
@@ -134,21 +155,32 @@ func (r *InventoryRepo) FreeReservedInventory(id string) error {
 	var query string
 	var err error
 
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query = "SELECT * FROM reserved_products WHERE reserved_id = $1"
-	err = r.db.QueryRow(query, id).Scan(&reserved.ID, &reserved.ProductId, &reserved.Quantity)
+	err = tx.QueryRow(query, id).Scan(&reserved.ID, &reserved.ProductId, &reserved.Quantity)
 	if err != nil {
 		return err
 	}
 
 	// Increament product quantity
 	query = "UPDATE products SET quantity = quantity + $2 WHERE products.product_id = $1"
-	_, err = r.db.Query(query, reserved.ProductId, reserved.Quantity)
+	_, err = tx.Exec(query, reserved.ProductId, reserved.Quantity)
 	if err != nil {
 		return err
 	}
 
 	query = "DELETE FROM reserved_products WHERE reserved_id = $1"
-	_, err = r.db.Query(query, id)
+	_, err = tx.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return err
 	}
