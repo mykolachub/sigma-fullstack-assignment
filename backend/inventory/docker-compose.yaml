@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: sigma-inventory-db-postgres
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: inventory_database
+      POSTGRES_USER: inventory_username
+      POSTGRES_PASSWORD: inventory_password
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+
+volumes:
+  inventory_db_data:

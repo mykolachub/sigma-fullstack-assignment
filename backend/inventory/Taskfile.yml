@@ -1,0 +1,41 @@
+version: '3'
+
+tasks:
+  server:
+    desc: Starts API Server
+    aliases: [s]
+    cmds:
+    - go run main.go
+
+  app:
+    desc: Starts API Server and Databases
+    aliases: [a]
+    cmds:
+    - task: db
+    - task: postgres:migrate
+    - task: server
+
+  db:
+    desc: Start all Databases
+    cmds:
+    - docker-compose up -d
+
+  db:stop:
+    desc: Start all Databases
+    cmds:
+    - docker-compose up -d
+
+  proto:
+    dir: proto/
+    desc: Generates protobuf golang services
+    cmds:
+    - protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative inventory.proto
+
+  postgres:migrate:
+    desc: Starts Database Migrations
+    dotenv:
+    - '.env'
+    vars:
+      DB_CONN_STRING: postgres://inventory_username:inventory_password@localhost:5433/inventory_database?sslmode=disable
+    cmds:
+    - migrate -database {{.DB_CONN_STRING}} -path internal/storage/postgres/migrations up
