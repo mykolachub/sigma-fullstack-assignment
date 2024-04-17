@@ -35,7 +35,7 @@ func (r *InventoryRepo) CreateInventory(data entity.Inventory) (entity.Inventory
 func (r *InventoryRepo) GetInventory(id string) (entity.Inventory, error) {
 	product := entity.Inventory{}
 
-	query := "SELECT * FROM products WHERE id = $1"
+	query := "SELECT * FROM products WHERE products.product_id = $1"
 	err := r.db.QueryRow(query, id).Scan(&product.ID, &product.Name, &product.Price, &product.Quantity)
 	if err != nil {
 		return entity.Inventory{}, nil
@@ -85,7 +85,7 @@ func (r *InventoryRepo) UpdateInventory(id string, data entity.Inventory, force 
 		return entity.Inventory{}, errors.New("empty update body")
 	}
 
-	query := "UPDATE products SET " + strings.Join(updates, ", ") + " WHERE id = $1 RETURNING *"
+	query := "UPDATE products SET " + strings.Join(updates, ", ") + " WHERE products.product_id = $1 RETURNING *"
 	fmt.Printf("query: %v\n", query)
 	err := r.db.QueryRow(query, args...).Scan(&product.ID, &product.Name, &product.Price, &product.Quantity)
 	if err != nil {
@@ -98,7 +98,7 @@ func (r *InventoryRepo) UpdateInventory(id string, data entity.Inventory, force 
 func (r *InventoryRepo) DeleteInventory(id string) (entity.Inventory, error) {
 	product := entity.Inventory{}
 
-	query := "DELETE FROM products WHERE id = $1 RETURNING *"
+	query := "DELETE FROM products WHERE products.product_id = $1 RETURNING *"
 	err := r.db.QueryRow(query, id).Scan(&product.ID, &product.Name, &product.Price, &product.Quantity)
 	if err != nil {
 		return entity.Inventory{}, err

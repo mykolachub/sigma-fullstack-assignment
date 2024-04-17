@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"sigma-inventory/internal/utils"
 	"sigma-inventory/proto"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,8 @@ func (h InventoryHandler) GetInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	data := utils.NewResponse("").AddKey("products", res)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) GetAllInventory(c *gin.Context) {
@@ -44,7 +46,8 @@ func (h InventoryHandler) GetAllInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	data := utils.NewResponse("").AddKey("products", res.Products)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) CreateInventory(c *gin.Context) {
@@ -61,7 +64,8 @@ func (h InventoryHandler) CreateInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, res)
+	data := utils.NewResponse("product created").AddKey("product", res)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) UpdateInventory(c *gin.Context) {
@@ -84,7 +88,8 @@ func (h InventoryHandler) UpdateInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, res)
+	data := utils.NewResponse("product update").AddKey("product", res)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) DecrementInventory(c *gin.Context) {
@@ -100,13 +105,14 @@ func (h InventoryHandler) DecrementInventory(c *gin.Context) {
 		return
 	}
 
-	res, err := h.invSvc.DecrementInventory(c, &req)
+	_, err := h.invSvc.DecrementInventory(c, &req)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, res)
+	data := utils.NewResponse("product decremented")
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) DeleteInventory(c *gin.Context) {
@@ -117,7 +123,8 @@ func (h InventoryHandler) DeleteInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	data := utils.NewResponse("product deleted").AddKey("product", res)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) ReserveInventory(c *gin.Context) {
@@ -133,7 +140,8 @@ func (h InventoryHandler) ReserveInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	data := utils.NewResponse("products reserved").AddKey("reserved_products", res.ReservedProducts)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h InventoryHandler) FreeReservedInventory(c *gin.Context) {
@@ -143,11 +151,12 @@ func (h InventoryHandler) FreeReservedInventory(c *gin.Context) {
 		return
 	}
 
-	res, err := h.invSvc.FreeReservedInventory(c, &req)
+	_, err := h.invSvc.FreeReservedInventory(c, &req)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, res)
+	data := utils.NewResponse("product reservation canceled")
+	c.JSON(http.StatusOK, data)
 }
