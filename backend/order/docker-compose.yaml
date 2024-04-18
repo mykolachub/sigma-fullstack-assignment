@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: sigma-order-db-postgres
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_DB: order_database
+      POSTGRES_USER: order_username
+      POSTGRES_PASSWORD: order_password
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+
+volumes:
+  order_db_data:
