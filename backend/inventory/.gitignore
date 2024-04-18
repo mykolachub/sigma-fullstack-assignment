@@ -23,3 +23,4 @@ go.work
 # Config files
 config.toml
 .env
+tmp

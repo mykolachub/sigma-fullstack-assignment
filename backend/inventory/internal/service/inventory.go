@@ -9,16 +9,17 @@ import (
 )
 
 type InventoryService struct {
-	repo InventoryRepo
+	Repo InventoryRepo
+	proto.UnimplementedInventoryServiceServer
 }
 
 func NewInventoryService(r InventoryRepo) *InventoryService {
-	return &InventoryService{repo: r}
+	return &InventoryService{Repo: r}
 }
 
 func (s *InventoryService) CreateProduct(ctx context.Context, in *proto.CreateProductRequest) (*proto.ProductResponse, error) {
 	data := entity.Inventory{Name: in.Name, Price: int(in.Price), Quantity: int(in.Quantity)}
-	product, err := s.repo.CreateInventory(data)
+	product, err := s.Repo.CreateInventory(data)
 	if err != nil {
 		return &proto.ProductResponse{}, errors.New("failed to create product")
 	}
@@ -29,7 +30,7 @@ func (s *InventoryService) CreateProduct(ctx context.Context, in *proto.CreatePr
 
 func (s *InventoryService) GetProduct(ctx context.Context, in *proto.GetProductRequest) (*proto.ProductResponse, error) {
 	id := in.Id
-	product, err := s.repo.GetInventory(id)
+	product, err := s.Repo.GetInventory(id)
 	if err != nil {
 		return &proto.ProductResponse{}, errors.New("no such product")
 	}
@@ -40,7 +41,7 @@ func (s *InventoryService) GetProduct(ctx context.Context, in *proto.GetProductR
 
 func (s *InventoryService) GetAllProducts(context.Context, *proto.GetAllProductsRequest) (*proto.GetAllProductsResponse, error) {
 	res := []*proto.UpdateProductRequest{}
-	products, err := s.repo.GetAllInventory()
+	products, err := s.Repo.GetAllInventory()
 	if err != nil {
 		return &proto.GetAllProductsResponse{}, errors.New("failed get products")
 	}
@@ -63,7 +64,7 @@ func (s *InventoryService) DecrementInventory(ctx context.Context, in *proto.Dec
 		}
 
 		data := entity.Inventory{Quantity: int(product.Quantity) - int(v.Quantity)}
-		_, err = s.repo.UpdateInventory(v.ProductId, data, entity.InventoryForceUpdate{Quantity: true})
+		_, err = s.Repo.UpdateInventory(v.ProductId, data, entity.InventoryForceUpdate{Quantity: true})
 		if err != nil {
 			return &proto.DecrementInventoryResponse{}, errors.New("failed to decrement inventory")
 		}
@@ -74,7 +75,7 @@ func (s *InventoryService) DecrementInventory(ctx context.Context, in *proto.Dec
 
 func (s *InventoryService) DeleteProduct(ctx context.Context, in *proto.DeleteProductRequest) (*proto.ProductResponse, error) {
 	id := in.Id
-	product, err := s.repo.DeleteInventory(id)
+	product, err := s.Repo.DeleteInventory(id)
 	if err != nil {
 		return &proto.ProductResponse{}, errors.New("failed to delete user")
 	}
@@ -87,7 +88,7 @@ func (s *InventoryService) ReserveInventory(ctx context.Context, in *proto.Reser
 	reservedProduct := []*proto.ReservedProduct{}
 
 	for _, v := range in.OrderItems {
-		reserved, err := s.repo.ReserveInventory(v.ProductId, int(v.GetQuantity()))
+		reserved, err := s.Repo.ReserveInventory(v.ProductId, int(v.GetQuantity()))
 		if err != nil {
 			return &proto.ReserveInventoryResponse{}, errors.New("failed to reserve product")
 		}
@@ -99,7 +100,7 @@ func (s *InventoryService) ReserveInventory(ctx context.Context, in *proto.Reser
 
 func (s *InventoryService) FreeReservedInventory(ctx context.Context, in *proto.FreeReservedInventoryRequest) (*proto.FreeReservedInventoryResponse, error) {
 	for _, v := range in.ReservedProducts {
-		err := s.repo.FreeReservedInventory(v.ReservedId)
+		err := s.Repo.FreeReservedInventory(v.ReservedId)
 		if err != nil {
 			return &proto.FreeReservedInventoryResponse{}, errors.New("failed to free product reservation")
 		}
@@ -110,7 +111,7 @@ func (s *InventoryService) FreeReservedInventory(ctx context.Context, in *proto.
 func (s *InventoryService) UpdateProduct(ctx context.Context, in *proto.UpdateProductRequest) (*proto.ProductResponse, error) {
 	data := entity.Inventory{Name: in.Name, Price: int(in.Price), Quantity: int(in.Quantity)}
 	id := in.Id
-	product, err := s.repo.UpdateInventory(id, data, entity.InventoryForceUpdate{})
+	product, err := s.Repo.UpdateInventory(id, data, entity.InventoryForceUpdate{})
 	if err != nil {
 		return &proto.ProductResponse{}, errors.New("failed to update product")
 	}
