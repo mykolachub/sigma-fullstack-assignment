@@ -82,4 +82,5 @@ message OrderItem {
 
 message ReservedProduct {
     string reserved_id = 1;
+    int32 quantity = 2;
 }

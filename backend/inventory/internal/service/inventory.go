@@ -93,7 +93,7 @@ func (s *InventoryService) ReserveInventory(ctx context.Context, in *proto.Reser
 			return &proto.ReserveInventoryResponse{}, errors.New("failed to reserve product")
 		}
 
-		reservedProduct = append(reservedProduct, &proto.ReservedProduct{ReservedId: reserved.ID})
+		reservedProduct = append(reservedProduct, &proto.ReservedProduct{ReservedId: reserved.ID, Quantity: int32(reserved.Quantity)})
 	}
 	return &proto.ReserveInventoryResponse{ReservedProducts: reservedProduct}, nil
 }
