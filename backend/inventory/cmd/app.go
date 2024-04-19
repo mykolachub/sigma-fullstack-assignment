@@ -12,39 +12,27 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
-func server(port string) {
+func server(port string, repo service.InventoryRepo) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	s := grpc.NewServer()
-	pb.RegisterInventoryServiceServer(s, pb.UnimplementedInventoryServiceServer{})
+	pb.RegisterInventoryServiceServer(s, &service.InventoryService{Repo: repo})
+	reflection.Register(s)
+
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
 
-func inventoryClient(port string) (*grpc.ClientConn, pb.InventoryServiceClient) {
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%v", port), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return conn, pb.NewInventoryServiceClient(conn)
-}
-
 func Run(env *config.Env) {
-	// gRPC Server
-	go server(env.GrpcPort)
-
-	// gRPC Clients
-	// invConn, _ := inventoryClient(env.GrpcInventoryClientPort)
-	// defer invConn.Close()
-
+	// Database configuration
 	db, err := postgres.InitDBConnection(postgres.PostgresConfig{
 		DBUser:     env.PostgresDBUser,
 		DBName:     env.PostgresDBName,
@@ -63,6 +51,9 @@ func Run(env *config.Env) {
 	services := controller.Services{
 		InventoryService: service.NewInventoryService(storages.InventoryRepo),
 	}
+
+	// gRPC Server
+	go server(env.GrpcPort, storages.InventoryRepo)
 
 	// HTTP Server
 	config.InitCorsConfig()
