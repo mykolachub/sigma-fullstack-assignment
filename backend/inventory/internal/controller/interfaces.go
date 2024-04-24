@@ -18,4 +18,5 @@ type InventoryService interface {
 	GetAllProducts(context.Context, *proto.GetAllProductsRequest) (*proto.GetAllProductsResponse, error)
 	ReserveInventory(context.Context, *proto.ReserveInventoryRequest) (*proto.ReserveInventoryResponse, error)
 	UpdateProduct(context.Context, *proto.UpdateProductRequest) (*proto.ProductResponse, error)
+	GetReservedInventory(ctx context.Context, in *proto.GetReservedInventoryRequest) (*proto.ReservedProduct, error)
 }

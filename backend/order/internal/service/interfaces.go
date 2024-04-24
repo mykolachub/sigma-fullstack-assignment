@@ -13,10 +13,11 @@ type OrderRepo interface {
 	GetAllOrders() ([]entity.Order, error)
 	UpdateOrder(id string, data entity.Order) (entity.Order, error)
 	DeleteOrder(id string) (entity.Order, error)
+	GetOrdersIds() ([]string, error)
 }
 
 type OrderItemRepo interface {
-	CreateItem() (entity.OrderItem, error)
+	CreateItem(order_id, reserved_id string) (entity.OrderItem, error)
 	GetItem(id string) (entity.OrderItem, error)
 	GetAllItems() ([]entity.OrderItem, error)
 	UpdateItem(id string, data entity.OrderItem) (entity.OrderItem, error)

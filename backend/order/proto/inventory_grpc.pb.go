@@ -24,12 +24,14 @@ const _ = grpc.SupportPackageIsVersion7
 type InventoryServiceClient interface {
 	CreateProduct(ctx context.Context, in *CreateProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	GetProduct(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
+	GetProductByReservedId(ctx context.Context, in *GetProductByReservedIdRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	GetAllProducts(ctx context.Context, in *GetAllProductsRequest, opts ...grpc.CallOption) (*GetAllProductsResponse, error)
 	UpdateProduct(ctx context.Context, in *UpdateProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	DeleteProduct(ctx context.Context, in *DeleteProductRequest, opts ...grpc.CallOption) (*ProductResponse, error)
 	ReserveInventory(ctx context.Context, in *ReserveInventoryRequest, opts ...grpc.CallOption) (*ReserveInventoryResponse, error)
 	FreeReservedInventory(ctx context.Context, in *FreeReservedInventoryRequest, opts ...grpc.CallOption) (*FreeReservedInventoryResponse, error)
 	DecrementInventory(ctx context.Context, in *DecrementInventoryRequest, opts ...grpc.CallOption) (*DecrementInventoryResponse, error)
+	GetReservedInventory(ctx context.Context, in *GetReservedInventoryRequest, opts ...grpc.CallOption) (*ReservedProduct, error)
 }
 
 type inventoryServiceClient struct {
@@ -52,6 +54,15 @@ func (c *inventoryServiceClient) CreateProduct(ctx context.Context, in *CreatePr
 func (c *inventoryServiceClient) GetProduct(ctx context.Context, in *GetProductRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
 	out := new(ProductResponse)
 	err := c.cc.Invoke(ctx, "/inventory.InventoryService/GetProduct", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inventoryServiceClient) GetProductByReservedId(ctx context.Context, in *GetProductByReservedIdRequest, opts ...grpc.CallOption) (*ProductResponse, error) {
+	out := new(ProductResponse)
+	err := c.cc.Invoke(ctx, "/inventory.InventoryService/GetProductByReservedId", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,18 +123,29 @@ func (c *inventoryServiceClient) DecrementInventory(ctx context.Context, in *Dec
 	return out, nil
 }
 
+func (c *inventoryServiceClient) GetReservedInventory(ctx context.Context, in *GetReservedInventoryRequest, opts ...grpc.CallOption) (*ReservedProduct, error) {
+	out := new(ReservedProduct)
+	err := c.cc.Invoke(ctx, "/inventory.InventoryService/GetReservedInventory", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // InventoryServiceServer is the server API for InventoryService service.
 // All implementations must embed UnimplementedInventoryServiceServer
 // for forward compatibility
 type InventoryServiceServer interface {
 	CreateProduct(context.Context, *CreateProductRequest) (*ProductResponse, error)
 	GetProduct(context.Context, *GetProductRequest) (*ProductResponse, error)
+	GetProductByReservedId(context.Context, *GetProductByReservedIdRequest) (*ProductResponse, error)
 	GetAllProducts(context.Context, *GetAllProductsRequest) (*GetAllProductsResponse, error)
 	UpdateProduct(context.Context, *UpdateProductRequest) (*ProductResponse, error)
 	DeleteProduct(context.Context, *DeleteProductRequest) (*ProductResponse, error)
 	ReserveInventory(context.Context, *ReserveInventoryRequest) (*ReserveInventoryResponse, error)
 	FreeReservedInventory(context.Context, *FreeReservedInventoryRequest) (*FreeReservedInventoryResponse, error)
 	DecrementInventory(context.Context, *DecrementInventoryRequest) (*DecrementInventoryResponse, error)
+	GetReservedInventory(context.Context, *GetReservedInventoryRequest) (*ReservedProduct, error)
 	mustEmbedUnimplementedInventoryServiceServer()
 }
 
@@ -136,6 +158,9 @@ func (UnimplementedInventoryServiceServer) CreateProduct(context.Context, *Creat
 }
 func (UnimplementedInventoryServiceServer) GetProduct(context.Context, *GetProductRequest) (*ProductResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProduct not implemented")
+}
+func (UnimplementedInventoryServiceServer) GetProductByReservedId(context.Context, *GetProductByReservedIdRequest) (*ProductResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProductByReservedId not implemented")
 }
 func (UnimplementedInventoryServiceServer) GetAllProducts(context.Context, *GetAllProductsRequest) (*GetAllProductsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllProducts not implemented")
@@ -154,6 +179,9 @@ func (UnimplementedInventoryServiceServer) FreeReservedInventory(context.Context
 }
 func (UnimplementedInventoryServiceServer) DecrementInventory(context.Context, *DecrementInventoryRequest) (*DecrementInventoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DecrementInventory not implemented")
+}
+func (UnimplementedInventoryServiceServer) GetReservedInventory(context.Context, *GetReservedInventoryRequest) (*ReservedProduct, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetReservedInventory not implemented")
 }
 func (UnimplementedInventoryServiceServer) mustEmbedUnimplementedInventoryServiceServer() {}
 
@@ -200,6 +228,24 @@ func _InventoryService_GetProduct_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InventoryServiceServer).GetProduct(ctx, req.(*GetProductRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InventoryService_GetProductByReservedId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProductByReservedIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryServiceServer).GetProductByReservedId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inventory.InventoryService/GetProductByReservedId",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryServiceServer).GetProductByReservedId(ctx, req.(*GetProductByReservedIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,6 +358,24 @@ func _InventoryService_DecrementInventory_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InventoryService_GetReservedInventory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReservedInventoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryServiceServer).GetReservedInventory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inventory.InventoryService/GetReservedInventory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryServiceServer).GetReservedInventory(ctx, req.(*GetReservedInventoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // InventoryService_ServiceDesc is the grpc.ServiceDesc for InventoryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -326,6 +390,10 @@ var InventoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProduct",
 			Handler:    _InventoryService_GetProduct_Handler,
+		},
+		{
+			MethodName: "GetProductByReservedId",
+			Handler:    _InventoryService_GetProductByReservedId_Handler,
 		},
 		{
 			MethodName: "GetAllProducts",
@@ -350,6 +418,10 @@ var InventoryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DecrementInventory",
 			Handler:    _InventoryService_DecrementInventory_Handler,
+		},
+		{
+			MethodName: "GetReservedInventory",
+			Handler:    _InventoryService_GetReservedInventory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

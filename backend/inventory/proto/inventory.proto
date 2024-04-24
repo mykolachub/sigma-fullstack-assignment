@@ -7,12 +7,14 @@ option go_package = "sigma-inventory/proto";
 service InventoryService {
     rpc CreateProduct (CreateProductRequest) returns (ProductResponse);
     rpc GetProduct (GetProductRequest) returns (ProductResponse);
+    rpc GetProductByReservedId (GetProductByReservedIdRequest) returns (ProductResponse);
     rpc GetAllProducts (GetAllProductsRequest) returns (GetAllProductsResponse);
     rpc UpdateProduct (UpdateProductRequest) returns (ProductResponse);
     rpc DeleteProduct (DeleteProductRequest) returns (ProductResponse);
     rpc ReserveInventory(ReserveInventoryRequest) returns (ReserveInventoryResponse);
     rpc FreeReservedInventory(FreeReservedInventoryRequest) returns (FreeReservedInventoryResponse);
     rpc DecrementInventory(DecrementInventoryRequest) returns (DecrementInventoryResponse);
+    rpc GetReservedInventory(GetReservedInventoryRequest) returns (ReservedProduct);
 }
 
 message CreateProductRequest {
@@ -82,5 +84,14 @@ message OrderItem {
 
 message ReservedProduct {
     string reserved_id = 1;
-    int32 quantity = 2;
+    string product_id = 2;
+    int32 quantity = 3;
+}
+
+message GetProductByReservedIdRequest {
+    string reserved_id = 1;
+}
+
+message GetReservedInventoryRequest {
+    string reserved_id = 1;
 }

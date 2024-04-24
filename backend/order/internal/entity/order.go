@@ -1,15 +1,16 @@
 package entity
 
-type orderStatus string
+type OrderStatus string
 
 const (
-	StatusDraft      orderStatus = "DRAFT"
-	StatusInProgress orderStatus = "INPROGRESS"
-	StatusPaid       orderStatus = "PAID"
+	StatusDraft      OrderStatus = "DRAFT"
+	StatusInProgress OrderStatus = "INPROGRESS"
+	StatusPaid       OrderStatus = "PAID"
 )
 
 type Order struct {
 	ID     string
 	UserID string
-	Status orderStatus
+	Status OrderStatus
+	Items  []OrderItem
 }
