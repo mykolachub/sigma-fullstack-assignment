@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sigma-order/internal/entity"
 	pb "sigma-order/proto"
 )
@@ -13,15 +12,22 @@ type OrderService struct {
 	orderItemRepo OrderItemRepo
 
 	invSvc pb.InventoryServiceClient
+	usrSvc UserService
 }
 
-func NewOrderService(orderRepo OrderRepo, orderItemRepo OrderItemRepo, invSvc pb.InventoryServiceClient) *OrderService {
-	return &OrderService{orderRepo: orderRepo, orderItemRepo: orderItemRepo, invSvc: invSvc}
+func NewOrderService(orderRepo OrderRepo, orderItemRepo OrderItemRepo, invSvc pb.InventoryServiceClient, usrSvc UserService) *OrderService {
+	return &OrderService{orderRepo: orderRepo, orderItemRepo: orderItemRepo, invSvc: invSvc, usrSvc: usrSvc}
 }
 
 func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderRequest) (*pb.OrderResponse, error) {
-	// TODO: Check if user exists
-	// TODO: create config for http requests to user service
+	exists, err := s.usrSvc.UserExists(ctx, in.UserId)
+	if err != nil {
+		return &pb.OrderResponse{}, err
+	}
+
+	if !exists {
+		return &pb.OrderResponse{}, errors.New("no such user")
+	}
 
 	// Create Order
 	order, err := s.orderRepo.CreateOrder(entity.Order{UserID: in.UserId, Status: entity.StatusDraft})
@@ -97,7 +103,14 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.GetAllOrdersRequ
 }
 
 func (s *OrderService) UpdateOrder(ctx context.Context, in *pb.UpdateOrderRequest) (*pb.OrderResponse, error) {
-	// TODO: Check if user exists
+	exists, err := s.usrSvc.UserExists(ctx, in.UserId)
+	if err != nil {
+		return &pb.OrderResponse{}, err
+	}
+
+	if !exists {
+		return &pb.OrderResponse{}, errors.New("no such user")
+	}
 
 	order, err := s.orderRepo.UpdateOrder(in.Id, entity.Order{UserID: in.UserId, Status: entity.OrderStatus(in.Status)})
 	if err != nil {
@@ -109,8 +122,6 @@ func (s *OrderService) UpdateOrder(ctx context.Context, in *pb.UpdateOrderReques
 }
 
 func (s *OrderService) DeleteOrder(ctx context.Context, in *pb.DeleteOrderRequest) (*pb.DeleteOrderResponse, error) {
-	// TODO: Check if user exists
-
 	order, err := s.orderRepo.GetOrder(in.OrderId)
 	if err != nil {
 		return &pb.DeleteOrderResponse{}, errors.New("no such order")
@@ -151,11 +162,22 @@ func (s *OrderService) DeleteOrder(ctx context.Context, in *pb.DeleteOrderReques
 }
 
 func (s *OrderService) AddOrderItem(ctx context.Context, in *pb.AddOrderItemRequest) (*pb.OrderResponse, error) {
-	// TODO: Check if user exists
+	order, err := s.orderRepo.GetOrderInfo(in.OrderId)
+	if err != nil {
+		return &pb.OrderResponse{}, errors.New("no such order")
+	}
+
+	exists, err := s.usrSvc.UserExists(ctx, order.UserID)
+	if err != nil {
+		return &pb.OrderResponse{}, err
+	}
+
+	if !exists {
+		return &pb.OrderResponse{}, errors.New("no such user")
+	}
 
 	// Reserve Product
 	orderItem := pb.OrderItem{ProductId: in.OrderItem.ProductId, Quantity: in.OrderItem.Quantity}
-	fmt.Printf("in: %+v\n", in)
 	reserved, err := s.invSvc.ReserveInventory(ctx, &pb.ReserveInventoryRequest{OrderItems: []*pb.OrderItem{&orderItem}})
 	if err != nil {
 		return &pb.OrderResponse{}, errors.New("failed to reserve product")
@@ -173,12 +195,20 @@ func (s *OrderService) AddOrderItem(ctx context.Context, in *pb.AddOrderItemRequ
 }
 
 func (s *OrderService) RemoveOrderItem(ctx context.Context, in *pb.RemoveOrderItemRequest) (*pb.OrderResponse, error) {
-	// TODO: Check if user exists
-
 	order, err := s.orderRepo.GetOrder(in.OrderId)
 	if err != nil {
 		return &pb.OrderResponse{}, err
 	}
+
+	exists, err := s.usrSvc.UserExists(ctx, order.UserID)
+	if err != nil {
+		return &pb.OrderResponse{}, err
+	}
+
+	if !exists {
+		return &pb.OrderResponse{}, errors.New("no such user")
+	}
+
 	for _, v := range order.Items {
 		if v.ID == in.OrderItemId {
 			// Free Product
@@ -202,12 +232,20 @@ func (s *OrderService) RemoveOrderItem(ctx context.Context, in *pb.RemoveOrderIt
 }
 
 func (s *OrderService) PayOrder(ctx context.Context, in *pb.PayOrderRequest) (*pb.PayOrderResponse, error) {
-	// TODO: Check if user exists
-
 	order, err := s.orderRepo.GetOrder(in.OrderId)
 	if err != nil {
 		return &pb.PayOrderResponse{}, errors.New("no such order")
 	}
+
+	exists, err := s.usrSvc.UserExists(ctx, order.UserID)
+	if err != nil {
+		return &pb.PayOrderResponse{}, err
+	}
+
+	if !exists {
+		return &pb.PayOrderResponse{}, errors.New("no such user")
+	}
+
 	if order.Status == entity.StatusPaid {
 		return &pb.PayOrderResponse{}, errors.New("order is already paid")
 	}

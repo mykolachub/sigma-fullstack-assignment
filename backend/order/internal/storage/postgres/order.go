@@ -31,6 +31,18 @@ func (r *OrderRepo) CreateOrder(data entity.Order) (entity.Order, error) {
 	return order, nil
 }
 
+func (r *OrderRepo) GetOrderInfo(id string) (entity.Order, error) {
+	order := entity.Order{}
+
+	query := "SELECT * FROM orders WHERE order_id = $1"
+	err := r.db.QueryRow(query, id).Scan(&order.ID, &order.UserID, &order.Status)
+	if err != nil {
+		return entity.Order{}, err
+	}
+
+	return order, nil
+}
+
 func (r *OrderRepo) GetOrder(id string) (entity.Order, error) {
 	order := entity.Order{}
 

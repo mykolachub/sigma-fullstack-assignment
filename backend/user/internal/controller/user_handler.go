@@ -30,11 +30,11 @@ func InitUserHandler(r *gin.Engine, userSvc UserService, userCfg UserHandlerConf
 	r.POST("/api/user/signup", handler.signup)
 	r.POST("/api/user/login", handler.login)
 
+	r.GET("/api/users", handler.getAllUsers)
+	r.GET("/api/users/:user_id", handler.getUserById)
 	users := r.Group("/api/users", middle.Protect())
 	{
 		users.GET("/me", handler.me)
-		users.GET("/:user_id", handler.getUserById)
-		users.GET("", handler.getAllUsers)
 		users.POST("", middle.OnlyAdmin(), handler.createUser)
 		users.PATCH("/:user_id", middle.OnlyAdminOrOwner(), handler.updateUser)
 		users.DELETE("/:user_id", middle.OnlyAdminOrOwner(), handler.deleteUser)

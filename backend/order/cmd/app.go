@@ -37,8 +37,9 @@ func Run(env *config.Env) {
 	}
 
 	inventoryClient := inventoryClient(env.GrpcInventoryClientPort)
+	userService := service.NewUserService(service.UserServiceConfig{Url: "http://localhost:8080/api/users/"})
 	services := controller.Services{
-		OrderService: service.NewOrderService(strorages.OrderRepo, strorages.OrderItemRepo, inventoryClient),
+		OrderService: service.NewOrderService(strorages.OrderRepo, strorages.OrderItemRepo, inventoryClient, userService),
 	}
 
 	config.InitCorsConfig()

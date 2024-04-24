@@ -14,6 +14,7 @@ type OrderRepo interface {
 	UpdateOrder(id string, data entity.Order) (entity.Order, error)
 	DeleteOrder(id string) (entity.Order, error)
 	GetOrdersIds() ([]string, error)
+	GetOrderInfo(id string) (entity.Order, error)
 }
 
 type OrderItemRepo interface {
