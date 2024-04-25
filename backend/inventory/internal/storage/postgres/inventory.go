@@ -43,6 +43,18 @@ func (r *InventoryRepo) GetInventory(id string) (entity.Inventory, error) {
 	return product, nil
 }
 
+func (r *InventoryRepo) GetInventoryByReservedId(reserved_id string) (entity.Inventory, error) {
+	product := entity.Inventory{}
+
+	query := `SELECT * FROM products WHERE product_id IN ( SELECT product_id FROM reserved_products WHERE reserved_products.reserved_id = $1)`
+	err := r.db.QueryRow(query, reserved_id).Scan(&product.ID, &product.Name, &product.Price, &product.Quantity)
+	if err != nil {
+		return entity.Inventory{}, err
+	}
+
+	return product, nil
+}
+
 func (r *InventoryRepo) GetAllInventory() ([]entity.Inventory, error) {
 	query := "SELECT * FROM products"
 	rows, err := r.db.Query(query)
@@ -104,6 +116,18 @@ func (r *InventoryRepo) DeleteInventory(id string) (entity.Inventory, error) {
 		return entity.Inventory{}, err
 	}
 	return product, nil
+}
+
+func (r *InventoryRepo) GetReservedInventory(id string) (entity.ReservedInventory, error) {
+	reserved := entity.ReservedInventory{}
+
+	query := "SELECT * FROM reserved_products WHERE reserved_id = $1"
+	err := r.db.QueryRow(query, id).Scan(&reserved.ID, &reserved.ProductId, &reserved.Quantity)
+	if err != nil {
+		return entity.ReservedInventory{}, err
+	}
+
+	return reserved, nil
 }
 
 func (r *InventoryRepo) ReserveInventory(id string, quantity int) (entity.ReservedInventory, error) {

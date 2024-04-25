@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "sigma-order/proto";
+
+service OrderService {
+    rpc GetOrder (GetOrderRequest) returns (OrderResponse);
+    rpc GetAllOrders (GetAllOrdersRequest) returns (GetAllOrdersResponse);
+    rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+    rpc UpdateOrder (UpdateOrderRequest) returns (OrderResponse);
+    rpc AddOrderItem (AddOrderItemRequest) returns (OrderResponse);
+    rpc RemoveOrderItem (RemoveOrderItemRequest) returns (OrderResponse);
+    rpc DeleteOrder (DeleteOrderRequest) returns (DeleteOrderResponse);
+    rpc PayOrder (PayOrderRequest) returns (PayOrderResponse);
+}
+
+message CreateOrderRequest {
+    string user_id = 1;
+    repeated Item order_items = 2;
+}
+
+message Item {
+    string id = 1;
+    string product_id = 2;
+    int32 quantity = 3;
+}
+
+message OrderResponse {
+    string id = 1;
+    string user_id = 2;
+    string status = 3;
+    repeated Item order_items = 4;
+}
+
+message GetOrderRequest {
+    string id = 1;
+}
+
+message GetAllOrdersRequest {}
+
+message GetAllOrdersResponse {
+    repeated OrderResponse orders = 1;
+}
+
+message UpdateOrderRequest {
+    string id = 1;
+    string user_id = 2;
+    string status = 3;
+    // other fields e.g. address, payment method etc.
+}
+
+message AddOrderItemRequest {
+    string order_id = 1;
+    Item order_item = 2;
+}
+
+message RemoveOrderItemRequest {
+    string order_id = 1;
+    string order_item_id = 2;
+}
+
+message DeleteOrderRequest {
+    string order_id = 1;
+}
+
+message DeleteOrderResponse {
+    string order_id = 1;
+}
+
+message PayOrderRequest {
+    string order_id = 1;
+}
+
+message PayOrderResponse {
+    bool success = 1;
+}

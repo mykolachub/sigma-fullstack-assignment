@@ -39,6 +39,16 @@ func (s *InventoryService) GetProduct(ctx context.Context, in *proto.GetProductR
 	return &res, nil
 }
 
+func (s *InventoryService) GetProductByReservedId(ctx context.Context, in *proto.GetProductByReservedIdRequest) (*proto.ProductResponse, error) {
+	product, err := s.Repo.GetInventoryByReservedId(in.ReservedId)
+	if err != nil {
+		return &proto.ProductResponse{}, errors.New("failed to get product")
+	}
+
+	res := proto.ProductResponse{Id: product.ID, Name: product.Name, Quantity: int32(product.Quantity), Price: int32(product.Price)}
+	return &res, nil
+}
+
 func (s *InventoryService) GetAllProducts(context.Context, *proto.GetAllProductsRequest) (*proto.GetAllProductsResponse, error) {
 	res := []*proto.UpdateProductRequest{}
 	products, err := s.Repo.GetAllInventory()
@@ -93,7 +103,7 @@ func (s *InventoryService) ReserveInventory(ctx context.Context, in *proto.Reser
 			return &proto.ReserveInventoryResponse{}, errors.New("failed to reserve product")
 		}
 
-		reservedProduct = append(reservedProduct, &proto.ReservedProduct{ReservedId: reserved.ID})
+		reservedProduct = append(reservedProduct, &proto.ReservedProduct{ReservedId: reserved.ID, Quantity: int32(reserved.Quantity), ProductId: reserved.ProductId})
 	}
 	return &proto.ReserveInventoryResponse{ReservedProducts: reservedProduct}, nil
 }
@@ -117,5 +127,15 @@ func (s *InventoryService) UpdateProduct(ctx context.Context, in *proto.UpdatePr
 	}
 
 	res := proto.ProductResponse{Id: product.ID, Name: product.Name, Price: int32(product.Price), Quantity: int32(product.Quantity)}
+	return &res, nil
+}
+
+func (s *InventoryService) GetReservedInventory(ctx context.Context, in *proto.GetReservedInventoryRequest) (*proto.ReservedProduct, error) {
+	reserved, err := s.Repo.GetReservedInventory(in.ReservedId)
+	if err != nil {
+		return &proto.ReservedProduct{}, errors.New("failed to get reserved product")
+	}
+
+	res := proto.ReservedProduct{ReservedId: reserved.ID, ProductId: reserved.ProductId, Quantity: int32(reserved.Quantity)}
 	return &res, nil
 }

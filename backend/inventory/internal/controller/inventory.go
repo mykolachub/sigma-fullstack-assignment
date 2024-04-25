@@ -23,6 +23,7 @@ func InitInventoryHandler(r *gin.Engine, invSvc InventoryService) {
 	r.PATCH("/api/inventory/:product_id/decrement", handler.DecrementInventory)
 	r.POST("/api/inventory", handler.CreateInventory)
 
+	r.GET("/api/inventory/reserved/:reserved_id", handler.GetReservedInventory)
 	r.POST("/api/inventory/reserve", handler.ReserveInventory)
 	r.PATCH("/api/inventory/reserve/free", handler.FreeReservedInventory)
 }
@@ -158,5 +159,18 @@ func (h InventoryHandler) FreeReservedInventory(c *gin.Context) {
 	}
 
 	data := utils.NewResponse("product reservation canceled")
+	c.JSON(http.StatusOK, data)
+}
+
+func (h InventoryHandler) GetReservedInventory(c *gin.Context) {
+	reserved_id := c.Param("reserved_id")
+
+	res, err := h.invSvc.GetReservedInventory(c, &proto.GetReservedInventoryRequest{ReservedId: reserved_id})
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	data := utils.NewResponse("").AddKey("reserved_products", res)
 	c.JSON(http.StatusOK, data)
 }
