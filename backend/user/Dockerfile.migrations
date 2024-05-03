@@ -1,0 +1,16 @@
+FROM alpine:latest
+
+# Set a working directory
+WORKDIR /app
+
+# Copy migrations directory in read-only mode
+COPY internal/storage/postgres/migrations /app/migrations
+
+# Install curl for downloading the migrate tool
+RUN apk add --no-cache curl
+
+# Download and extract migrate binary
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.1/migrate.linux-arm64.tar.gz | tar xvz
+
+# Run migrations
+CMD ["sh", "-c", "./migrate -database postgres://user_username:user_password@user-db-postgres:5432/user_database?sslmode=disable -path /app/migrations up"]

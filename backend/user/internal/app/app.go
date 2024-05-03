@@ -20,6 +20,8 @@ func SetupRouter(env *config.Env) *gin.Engine {
 		DBName:     env.PostgresDBName,
 		DBPassword: env.PostgresDBPassword,
 		DBSSLMode:  env.PostgresDBSSLMode,
+		DBPort:     env.PostgresDBPort,
+		DBHost:     env.PostgresDBHost,
 	}
 	aerospikeConfig := aerospike.AerospikeConfig{
 		Hostname: env.AerospikeHostname,
@@ -62,7 +64,7 @@ func SetupRouter(env *config.Env) *gin.Engine {
 }
 
 func Run(env *config.Env) {
-	port := fmt.Sprintf(":%s", env.Port)
+	port := fmt.Sprintf(":%s", env.HttpPort)
 
 	r := SetupRouter(env)
 	r.Run(port)

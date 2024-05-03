@@ -26,6 +26,7 @@ func Run(env *config.Env) {
 		DBPassword: env.PostgresDBPassword,
 		DBPort:     env.PostgresDBPort,
 		DBSSLMode:  env.PostgresDBSSLMode,
+		DBHost:     env.PostgresDBHost,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -36,8 +37,10 @@ func Run(env *config.Env) {
 		OrderItemRepo: postgres.InitOrderItemRepo(db),
 	}
 
-	inventoryClient := inventoryClient(env.GrpcInventoryClientPort)
-	userService := service.NewUserService(service.UserServiceConfig{Url: "http://localhost:8080/api/users/"})
+	inventoryClient := inventoryClient(env.GrpcInventoryClientHost, env.GrpcInventoryClientPort)
+	userServiceBase := fmt.Sprintf("http://%s:%s", env.UserServiceHost, env.UserServicePort)
+	userServiceUrl := fmt.Sprintf("%s/api/users/", userServiceBase)
+	userService := service.NewUserService(service.UserServiceConfig{Url: userServiceUrl})
 	services := controller.Services{
 		OrderService: service.NewOrderService(strorages.OrderRepo, strorages.OrderItemRepo, inventoryClient, userService),
 	}
@@ -64,8 +67,8 @@ func grpcServer(port string) {
 	}
 }
 
-func inventoryClient(port string) pb.InventoryServiceClient {
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%v", port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+func inventoryClient(host, port string) pb.InventoryServiceClient {
+	conn, err := grpc.Dial(fmt.Sprintf("%v:%v", host, port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}

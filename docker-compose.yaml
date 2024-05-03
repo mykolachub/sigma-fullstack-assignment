@@ -1,0 +1,176 @@
+version: '3.8'
+
+name: sigma
+
+services:
+  user-db-postgres:
+    image: postgres:latest
+    container_name: user-db-postgres
+    expose:
+      - '5432'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: user_database
+      POSTGRES_USER: user_username
+      POSTGRES_PASSWORD: user_password
+    networks:
+      - sigma-network
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U user_username']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-db-aerospike:
+    container_name: user-db-aerospike
+    ports:
+      - 3000-3002:3000-3002
+    image: aerospike/aerospike-server
+    networks:
+      - sigma-network
+
+  user-backend:
+    env_file:
+      - ./backend/user/.docker.env
+    ports:
+      - 8080:8080
+    build:
+      context: ./user
+      dockerfile: Dockerfile.backend
+    container_name: user-backend
+    networks:
+      - sigma-network
+    depends_on:
+      user-db-aerospike:
+        condition: service_started
+      user-db-postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  user-db-migrate:
+    container_name: user-db-migrate
+    build:
+      context: ./backend/user
+      dockerfile: Dockerfile.migrations
+    depends_on:
+      - user-backend
+    networks:
+      - sigma-network
+
+  inventory-db-postgres:
+    image: postgres:latest
+    container_name: inventory-db-postgres
+    expose:
+      - '5433'
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: inventory_database
+      POSTGRES_USER: inventory_username
+      POSTGRES_PASSWORD: inventory_password
+    networks:
+      - sigma-network
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U inventory_username']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  inventory-backend:
+    env_file:
+      - ./backend/inventory/.docker.env
+    ports:
+      - 8081:8081
+    build:
+      context: ./inventory
+      dockerfile: Dockerfile.backend
+    container_name: inventory-backend
+    networks:
+      - sigma-network
+    depends_on:
+      inventory-db-postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  inventory-db-migrate:
+    container_name: inventory-db-migrate
+    build:
+      context: ./backend/inventory
+      dockerfile: Dockerfile.migrations
+    depends_on:
+      - inventory-backend
+    networks:
+      - sigma-network
+
+  order-db-postgres:
+    image: postgres:latest
+    container_name: order-db-postgres
+    expose:
+      - '5434'
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_DB: order_database
+      POSTGRES_USER: order_username
+      POSTGRES_PASSWORD: order_password
+    networks:
+      - sigma-network
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U order_username']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  order-backend:
+    env_file:
+      - ./backend/order/.docker.env
+    ports:
+      - 8082:8082
+    build:
+      context: ./order
+      dockerfile: Dockerfile.backend
+    container_name: order-backend
+    networks:
+      - sigma-network
+    depends_on:
+      order-db-postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  order-db-migrate:
+    container_name: order-db-migrate
+    build:
+      context: ./backend/order
+      dockerfile: Dockerfile.migrations
+    depends_on:
+      - order-backend
+    networks:
+      - sigma-network
+
+  frontend:
+    container_name: frontend
+    env_file:
+      - ./frontend/.env
+    ports:
+      - 3333:3333
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    networks:
+      - sigma-network
+    restart: on-failure
+
+volumes:
+  user_db_data: {}
+  order_db_data: {}
+  inventory_db_data: {}
+
+networks:
+  sigma-network:

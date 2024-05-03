@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sigma-order/internal/entity"
@@ -22,6 +23,7 @@ func NewUserService(config UserServiceConfig) UserService {
 
 func (s *UserService) GetUser(ctx context.Context, userId string) (*entity.User, error) {
 	client := &http.Client{}
+	fmt.Printf("s.cfg.Url: %v\n", s.cfg.Url)
 	req, err := http.NewRequest("GET", s.cfg.Url+userId, nil)
 	if err != nil {
 		return nil, err

@@ -15,6 +15,7 @@ type Env struct {
 	PostgresDBName          string `envconfig:"POSTGRES_DBNAME"`
 	PostgresDBSSLMode       string `envconfig:"POSTGRES_DBSSLMODE"`
 	PostgresDBPort          string `envconfig:"POSTGRES_DBPORT"`
+	PostgresDBHost          string `envconfig:"POSTGRES_DBHOST"`
 }
 
 func ConfigEnv() *Env {

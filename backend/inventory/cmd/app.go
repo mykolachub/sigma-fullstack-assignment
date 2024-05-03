@@ -39,6 +39,7 @@ func Run(env *config.Env) {
 		DBPassword: env.PostgresDBPassword,
 		DBSSLMode:  env.PostgresDBSSLMode,
 		DBPort:     env.PostgresDBPort,
+		DBHost:     env.PostgresDBHost,
 	})
 	if err != nil {
 		log.Fatal(err)

@@ -1,0 +1,16 @@
+FROM golang:1.22-alpine AS sigma-order-backend
+
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN go build -o main .
+
+FROM alpine:latest
+WORKDIR /app
+
+COPY --from=sigma-order-backend /app/main .
+
+EXPOSE 8082
+
+CMD ["./main"]
